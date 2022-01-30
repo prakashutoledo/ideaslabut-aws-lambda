@@ -1,0 +1,38 @@
+buildscript {
+    ext {
+        awsLambdaJavaEventsVersion = '3.11.0'
+        awsLambdaJavaCoreVersion = '1.2.1'
+        awsJavaSdkApiGatewayManagementApiVersion = '1.12.150'
+        awsSdkCognitoIdentityVersion = '1.12.150'
+        awsJavaSdkCoreVersion = '1.12.150'
+    }
+}
+
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+}
+
+
+group = 'org.ideaslabut'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation "com.amazonaws:aws-lambda-java-events:${awsLambdaJavaEventsVersion}"
+    implementation "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}"
+    implementation "com.amazonaws:aws-java-sdk-apigatewaymanagementapi:${awsJavaSdkApiGatewayManagementApiVersion}"
+    implementation "com.amazonaws:aws-java-sdk-core:${awsJavaSdkCoreVersion}"
+}
+
+shadowJar {
+    destinationDirectory = file("${buildDir}/libs")
+}
+
+test {
+	useJUnitPlatform()
+}
