@@ -40,10 +40,8 @@ public class WebSocketService {
     private static final String HTTP_METHOD_POST = "POST";
     private static final String HTTP_METHOD_DELETE = "DELETE";
     private static final String WEB_SOCKET_CONNECTION_URL = "websocket.connection.url";
-;
 
     private static final String CONTENT_TYPE_JSON = "application/json";
-
     private static final MediaType MEDIA_TYPE_JSON = MediaType.get(String.format("%s; %s",CONTENT_TYPE_JSON,"charset=utf-8"));
 
     private static WebSocketService INSTANCE = null;
