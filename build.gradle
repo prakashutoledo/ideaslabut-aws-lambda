@@ -1,6 +1,5 @@
 buildscript {
     ext {
-        awsLambdaJavaEventsVersion = '3.11.0'
         awsLambdaJavaCoreVersion = '1.2.1'
         awsJavaSdkApiGatewayManagementApiVersion = '1.12.150'
         awsSdkCognitoIdentityVersion = '1.12.150'
@@ -34,5 +33,5 @@ shadowJar {
 }
 
 test {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

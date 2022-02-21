@@ -31,11 +31,19 @@ import java.util.Properties;
 
 public class WebSocketService {
     private static final int HTTP_OK_STATUS_CODE = 200;
-    private static final String WEB_SOCKET_CONNECTION_URL = "websocket.connection.url";
+    private static final int HTTP_BAD_RESPONSE_STATUS_CODE = 400;
+
+    private static final String APPLICATION_PROPERTIES_FILE = "application.properties";
     private static final String ELASTICSEARCH_URL = "elasticsearch.url";
     private static final String ELASTICSEARCH_AUTHENTICATION_KEY = "elasticsearch.authenticationKey";
-    private static final String APPLICATION_PROPERTIES_FILE = "application.properties";
+    private static final String HTTP_METHOD_GET = "GET";
+    private static final String HTTP_METHOD_POST = "POST";
+    private static final String HTTP_METHOD_DELETE = "DELETE";
+    private static final String WEB_SOCKET_CONNECTION_URL = "websocket.connection.url";
+;
+
     private static final String CONTENT_TYPE_JSON = "application/json";
+
     private static final MediaType MEDIA_TYPE_JSON = MediaType.get(String.format("%s; %s",CONTENT_TYPE_JSON,"charset=utf-8"));
 
     private static WebSocketService INSTANCE = null;
@@ -104,14 +112,14 @@ public class WebSocketService {
      */
     public WebSocketProxyResponseEvent processEvent(WebSocketProxyRequestEvent webSocketProxyRequestEvent) {
         if (webSocketProxyRequestEvent == null || webSocketProxyRequestEvent.getRequestContext() == null) {
-            return responseEvent(400);
+            return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
         WebSocketRequestContext requestContext = webSocketProxyRequestEvent.getRequestContext();
         RouteKey routeKey = RouteKey.fromAction(webSocketProxyRequestEvent.getRequestContext().getRouteKey());
 
         if (routeKey == null) {
-            return responseEvent(400);
+            return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
         switch (routeKey) {
@@ -141,10 +149,10 @@ public class WebSocketService {
             webSocketConnection.setConnectionId(connectionId);
             var body = RequestBody.Companion.create(objectMapper.writeValueAsString(webSocketConnection), MEDIA_TYPE_JSON);
             var elasticsearchURL = String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_create", connectionId);
-            var createResponse = okHttpClient.newCall(httpRequest(elasticsearchURL, "POST", body)).execute();
+            var createResponse = okHttpClient.newCall(httpRequest(elasticsearchURL, HTTP_METHOD_POST, body)).execute();
             responseStatusCode = createResponse.code();
         } catch (IOException exception) {
-            responseStatusCode = 400;
+            responseStatusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
 
         return responseEvent(responseStatusCode);
@@ -160,12 +168,13 @@ public class WebSocketService {
     private WebSocketProxyResponseEvent removeConnection(String connectionId) {
         int statusCode;
         try {
+            var elasticsearchURL = String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_doc", connectionId);
             var deleteResponse = okHttpClient
-                    .newCall(httpRequest(String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_doc", connectionId), "DELETE", null))
+                    .newCall(httpRequest(elasticsearchURL, HTTP_METHOD_DELETE, null))
                     .execute();
             statusCode = deleteResponse.code();
         } catch (IOException e) {
-            statusCode = 400;
+            statusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
 
         return responseEvent(statusCode);
@@ -185,8 +194,9 @@ public class WebSocketService {
 
         int statusCode;
         try {
+            var elasticsearchSocketSearchURL = String.format("%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_search");
             var getResponse = okHttpClient
-                    .newCall(httpRequest(String.format("%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_search"), "GET", null))
+                    .newCall(httpRequest(elasticsearchSocketSearchURL, HTTP_METHOD_GET, null))
                     .execute();
             statusCode = getResponse.code();
             if (statusCode == HTTP_OK_STATUS_CODE) {
@@ -197,11 +207,9 @@ public class WebSocketService {
                         .getHits().stream()
                         .map(hit -> hit.getSource().getConnectionId())
                         .forEach(connectionId -> this.sendMessage(connectionId, body));
-
-                statusCode = 200;
             }
         } catch (IOException ioe) {
-           statusCode = 400;
+           statusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
         return responseEvent(statusCode);
     }
