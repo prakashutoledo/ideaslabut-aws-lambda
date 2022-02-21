@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 
 public class WebSocketHits {
     @JsonAlias("_source")
-    private WebSocketConnection source;
+    private WebSocket source;
 
-    public WebSocketConnection getSource() {
+    public WebSocket getSource() {
         return source;
     }
 
-    public void setSource(WebSocketConnection source) {
+    public void setSource(WebSocket source) {
         this.source = source;
     }
 

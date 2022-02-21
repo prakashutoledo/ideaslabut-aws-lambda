@@ -1,6 +1,6 @@
 package org.ideaslabut.aws.lambda.domain;
 
-public class WebSocketConnection {
+public class WebSocket {
     private String connectionId;
 
     public String getConnectionId() {

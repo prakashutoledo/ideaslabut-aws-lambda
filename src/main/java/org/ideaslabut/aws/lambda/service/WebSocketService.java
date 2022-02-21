@@ -1,6 +1,7 @@
 package org.ideaslabut.aws.lambda.service;
 
 import static com.amazonaws.regions.Regions.US_EAST_2;
+import static java.util.Objects.requireNonNull;
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.services.apigatewaymanagementapi.AmazonApiGatewayManagementApi;
@@ -13,13 +14,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 import okhttp3.Request;
 import okhttp3.CacheControl;
 
 import org.ideaslabut.aws.lambda.domain.ElasticsearchResponse;
 import org.ideaslabut.aws.lambda.domain.RouteKey;
-import org.ideaslabut.aws.lambda.domain.WebSocketConnection;
+import org.ideaslabut.aws.lambda.domain.WebSocket;
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyResponseEvent;
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyRequestEvent;
 import org.ideaslabut.aws.lambda.domain.WebSocketRequestContext;
@@ -27,7 +27,6 @@ import org.ideaslabut.aws.lambda.domain.WebSocketRequestContext;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.Properties;
 
 public class WebSocketService {
@@ -59,6 +58,11 @@ public class WebSocketService {
 
     private static WebSocketService buildInstance() {
         var properties = new Properties();
+        try {
+            properties.load(WebSocketService.class.getResourceAsStream(APPLICATION_PROPERTIES_FILE));
+        } catch (IOException ignored) {
+        }
+
         var endPointConfiguration = new EndpointConfiguration(properties.getProperty(WEB_SOCKET_CONNECTION_URL), US_EAST_2.getName());
         var apiGatewayManagementClient = AmazonApiGatewayManagementApiClientBuilder
                 .standard()
@@ -66,12 +70,8 @@ public class WebSocketService {
                 .build();
         var objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        try {
-            properties.load(WebSocketService.class.getResourceAsStream(APPLICATION_PROPERTIES_FILE));
-        } catch (IOException ignored) {
-        }
-
-        return new WebSocketService(objectMapper, apiGatewayManagementClient, null, properties);
+        var okHttpClient = new OkHttpClient().newBuilder().cache(null).build();
+        return new WebSocketService(objectMapper, apiGatewayManagementClient, okHttpClient, properties);
     }
 
     private final Properties properties;
@@ -137,10 +137,11 @@ public class WebSocketService {
         int responseStatusCode;
 
         try {
-            WebSocketConnection webSocketConnection = new WebSocketConnection();
+            var webSocketConnection = new WebSocket();
             webSocketConnection.setConnectionId(connectionId);
-            RequestBody body = RequestBody.Companion.create(objectMapper.writeValueAsString(webSocketConnection), MEDIA_TYPE_JSON);
-            Response createResponse = okHttpClient.newCall(httpRequest(String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_create", connectionId), "POST", body)).execute();
+            var body = RequestBody.Companion.create(objectMapper.writeValueAsString(webSocketConnection), MEDIA_TYPE_JSON);
+            var elasticsearchURL = String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_create", connectionId);
+            var createResponse = okHttpClient.newCall(httpRequest(elasticsearchURL, "POST", body)).execute();
             responseStatusCode = createResponse.code();
         } catch (IOException exception) {
             responseStatusCode = 400;
@@ -159,7 +160,7 @@ public class WebSocketService {
     private WebSocketProxyResponseEvent removeConnection(String connectionId) {
         int statusCode;
         try {
-            Response deleteResponse = okHttpClient
+            var deleteResponse = okHttpClient
                     .newCall(httpRequest(String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_doc", connectionId), "DELETE", null))
                     .execute();
             statusCode = deleteResponse.code();
@@ -184,20 +185,20 @@ public class WebSocketService {
 
         int statusCode;
         try {
-            Response getResponse = okHttpClient
+            var getResponse = okHttpClient
                     .newCall(httpRequest(String.format("%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_search"), "GET", null))
                     .execute();
             statusCode = getResponse.code();
             if (statusCode == HTTP_OK_STATUS_CODE) {
                 var elasticsearchResponse = objectMapper
-                        .readValue(Objects.requireNonNull(getResponse.body()).string(), ElasticsearchResponse.class);
+                        .readValue(requireNonNull(getResponse.body()).string(), ElasticsearchResponse.class);
 
                 elasticsearchResponse.getHits()
                         .getHits().stream()
                         .map(hit -> hit.getSource().getConnectionId())
                         .forEach(connectionId -> this.sendMessage(connectionId, body));
 
-                statusCode = 400;
+                statusCode = 200;
             }
         } catch (IOException ioe) {
            statusCode = 400;
