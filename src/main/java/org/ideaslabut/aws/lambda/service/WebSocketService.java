@@ -2,30 +2,44 @@ package org.ideaslabut.aws.lambda.service;
 
 import static com.amazonaws.regions.Regions.US_EAST_2;
 
-import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.services.apigatewaymanagementapi.AmazonApiGatewayManagementApi;
 import com.amazonaws.services.apigatewaymanagementapi.AmazonApiGatewayManagementApiClientBuilder;
 import com.amazonaws.services.apigatewaymanagementapi.model.PostToConnectionRequest;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Request;
+import okhttp3.CacheControl;
+
+import org.ideaslabut.aws.lambda.domain.ElasticsearchResponse;
 import org.ideaslabut.aws.lambda.domain.RouteKey;
+import org.ideaslabut.aws.lambda.domain.WebSocketConnection;
+import org.ideaslabut.aws.lambda.domain.WebSocketProxyResponseEvent;
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyRequestEvent;
 import org.ideaslabut.aws.lambda.domain.WebSocketRequestContext;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Objects;
+import java.util.Properties;
 
 public class WebSocketService {
     private static final int HTTP_OK_STATUS_CODE = 200;
-    private static final String WEB_SOCKET_CONNECTION_URL = "https://h8nhk262f7.execute-api.us-east-2.amazonaws.com/production";
-    private static final AmazonApiGatewayManagementApi API_GATEWAY_MANAGEMENT_CLIENT = AmazonApiGatewayManagementApiClientBuilder
-            .standard()
-            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(WEB_SOCKET_CONNECTION_URL, US_EAST_2.getName()))
-            .build();
+    private static final String WEB_SOCKET_CONNECTION_URL = "websocket.connection.url";
+    private static final String ELASTICSEARCH_URL = "elasticsearch.url";
+    private static final String ELASTICSEARCH_AUTHENTICATION_KEY = "elasticsearch.authenticationKey";
+    private static final String APPLICATION_PROPERTIES_FILE = "application.properties";
+    private static final String CONTENT_TYPE_JSON = "application/json";
+    private static final MediaType MEDIA_TYPE_JSON = MediaType.get(String.format("%s; %s",CONTENT_TYPE_JSON,"charset=utf-8"));
 
-    public static WebSocketService INSTANCE = null;
+    private static WebSocketService INSTANCE = null;
 
     /**
      * A threadsafe singleton instance for WebSocketService
@@ -36,14 +50,43 @@ public class WebSocketService {
         if (INSTANCE == null) {
             synchronized (WebSocketService.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new WebSocketService();
+                    INSTANCE = buildInstance();
                 }
             }
         }
         return INSTANCE;
     }
 
-    private final Set<String> connectedIds = new HashSet<>();
+    private static WebSocketService buildInstance() {
+        var properties = new Properties();
+        var endPointConfiguration = new EndpointConfiguration(properties.getProperty(WEB_SOCKET_CONNECTION_URL), US_EAST_2.getName());
+        var apiGatewayManagementClient = AmazonApiGatewayManagementApiClientBuilder
+                .standard()
+                .withEndpointConfiguration(endPointConfiguration)
+                .build();
+        var objectMapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            properties.load(WebSocketService.class.getResourceAsStream(APPLICATION_PROPERTIES_FILE));
+        } catch (IOException ignored) {
+        }
+
+        return new WebSocketService(objectMapper, apiGatewayManagementClient, null, properties);
+    }
+
+    private final Properties properties;
+    private final ObjectMapper objectMapper;
+    private final OkHttpClient okHttpClient;
+    private final AmazonApiGatewayManagementApi amazonApiGatewayManagementApi;
+
+    public WebSocketService(ObjectMapper objectMapper,
+                            AmazonApiGatewayManagementApi amazonApiGatewayManagementApi,
+                            OkHttpClient okHttpClient, Properties properties) {
+        this.objectMapper = objectMapper;
+        this.amazonApiGatewayManagementApi = amazonApiGatewayManagementApi;
+        this.okHttpClient = okHttpClient;
+        this.properties = properties;
+    }
 
 
     /**
@@ -59,7 +102,7 @@ public class WebSocketService {
      * @throws IllegalStateException if no route key are matched, api gateway default route key is considered
      *                               as unmatched
      */
-    public APIGatewayProxyResponseEvent processEvent(WebSocketProxyRequestEvent webSocketProxyRequestEvent) {
+    public WebSocketProxyResponseEvent processEvent(WebSocketProxyRequestEvent webSocketProxyRequestEvent) {
         if (webSocketProxyRequestEvent == null || webSocketProxyRequestEvent.getRequestContext() == null) {
             return responseEvent(400);
         }
@@ -73,11 +116,11 @@ public class WebSocketService {
 
         switch (routeKey) {
             case CONNECT:
-                return this.addConnection(requestContext.getConnectionId());
+                return addConnection(requestContext.getConnectionId());
             case DISCONNECT:
-                return this.removeConnection(requestContext.getConnectionId());
+                return removeConnection(requestContext.getConnectionId());
             case SEND_MESSAGE:
-                return this.sendWebSocketMessage(webSocketProxyRequestEvent.getBody());
+                return sendWebSocketMessage(webSocketProxyRequestEvent.getBody());
             default:
                 throw new IllegalStateException("Unsupported routeKey: " + routeKey);
         }
@@ -90,9 +133,20 @@ public class WebSocketService {
      *
      * @return an api gateway response event with status code 200
      */
-    private APIGatewayProxyResponseEvent addConnection(String connectionId) {
-        this.connectedIds.add(connectionId);
-        return responseEvent(HTTP_OK_STATUS_CODE);
+    private WebSocketProxyResponseEvent addConnection(String connectionId) {
+        int responseStatusCode;
+
+        try {
+            WebSocketConnection webSocketConnection = new WebSocketConnection();
+            webSocketConnection.setConnectionId(connectionId);
+            RequestBody body = RequestBody.Companion.create(objectMapper.writeValueAsString(webSocketConnection), MEDIA_TYPE_JSON);
+            Response createResponse = okHttpClient.newCall(httpRequest(String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_create", connectionId), "POST", body)).execute();
+            responseStatusCode = createResponse.code();
+        } catch (IOException exception) {
+            responseStatusCode = 400;
+        }
+
+        return responseEvent(responseStatusCode);
     }
 
     /**
@@ -102,9 +156,18 @@ public class WebSocketService {
      *
      * @return an api gateway response event with status code 200
      */
-    private APIGatewayProxyResponseEvent removeConnection(String connectionId) {
-        this.connectedIds.remove(connectionId);
-        return responseEvent(HTTP_OK_STATUS_CODE);
+    private WebSocketProxyResponseEvent removeConnection(String connectionId) {
+        int statusCode;
+        try {
+            Response deleteResponse = okHttpClient
+                    .newCall(httpRequest(String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_doc", connectionId), "DELETE", null))
+                    .execute();
+            statusCode = deleteResponse.code();
+        } catch (IOException e) {
+            statusCode = 400;
+        }
+
+        return responseEvent(statusCode);
     }
 
     /**
@@ -114,15 +177,33 @@ public class WebSocketService {
      *
      * @return an api gateway response event with status code 200 if successful
      */
-    private APIGatewayProxyResponseEvent sendWebSocketMessage(final Object body) {
+    private WebSocketProxyResponseEvent sendWebSocketMessage(final Object body) {
         if (body == null) {
             throw new NullPointerException("A valid message body is required");
         }
 
-        this.connectedIds.forEach(connectionId -> this.sendMessage(connectionId, body));
-        return responseEvent(HTTP_OK_STATUS_CODE);
-    }
+        int statusCode;
+        try {
+            Response getResponse = okHttpClient
+                    .newCall(httpRequest(String.format("%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_search"), "GET", null))
+                    .execute();
+            statusCode = getResponse.code();
+            if (statusCode == HTTP_OK_STATUS_CODE) {
+                var elasticsearchResponse = objectMapper
+                        .readValue(Objects.requireNonNull(getResponse.body()).string(), ElasticsearchResponse.class);
 
+                elasticsearchResponse.getHits()
+                        .getHits().stream()
+                        .map(hit -> hit.getSource().getConnectionId())
+                        .forEach(connectionId -> this.sendMessage(connectionId, body));
+
+                statusCode = 400;
+            }
+        } catch (IOException ioe) {
+           statusCode = 400;
+        }
+        return responseEvent(statusCode);
+    }
 
     /**
      * Send the given message body to given webSocket connection id
@@ -135,7 +216,10 @@ public class WebSocketService {
                 .withConnectionId(connectionId)
                 .withData(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8)));
 
-        API_GATEWAY_MANAGEMENT_CLIENT.postToConnection(connectionRequest);
+        try {
+            amazonApiGatewayManagementApi.postToConnection(connectionRequest);
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -145,10 +229,21 @@ public class WebSocketService {
      * @param statusCode a status code to write to response
      * @return a api gateway response event with given status code and empty body
      */
-    private APIGatewayProxyResponseEvent responseEvent(int statusCode) {
-        return new APIGatewayProxyResponseEvent()
-                .withBody("")
-                .withStatusCode(statusCode)
-                .withIsBase64Encoded(false);
+    private WebSocketProxyResponseEvent responseEvent(int statusCode) {
+        WebSocketProxyResponseEvent proxyResponseEvent = new WebSocketProxyResponseEvent();
+        proxyResponseEvent.setBody("");
+        proxyResponseEvent.setStatusCode(statusCode);
+        proxyResponseEvent.setIsBase64Encoded(false);
+        return proxyResponseEvent;
+    }
+
+    private Request httpRequest(String elasticsearchURL, String httpMethod, RequestBody requestBody) {
+        return new Request.Builder()
+                .url(elasticsearchURL)
+                .cacheControl(CacheControl.FORCE_NETWORK)
+                .method(httpMethod, requestBody)
+                .addHeader("Authorization", String.format("Basic %s", properties.getProperty(ELASTICSEARCH_AUTHENTICATION_KEY)))
+                .addHeader("Content-Type", CONTENT_TYPE_JSON)
+                .build();
     }
 }

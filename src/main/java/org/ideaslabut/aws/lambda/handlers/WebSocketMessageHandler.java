@@ -2,12 +2,13 @@ package org.ideaslabut.aws.lambda.handlers;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyRequestEvent;
+import org.ideaslabut.aws.lambda.domain.WebSocketProxyResponseEvent;
 import org.ideaslabut.aws.lambda.service.WebSocketService;
 
-public class WebSocketMessageHandler implements RequestHandler<WebSocketProxyRequestEvent, APIGatewayProxyResponseEvent> {
+public class WebSocketMessageHandler implements RequestHandler<WebSocketProxyRequestEvent, WebSocketProxyResponseEvent> {
+    
     /**
      * Handles input request for given
      *
@@ -16,7 +17,7 @@ public class WebSocketMessageHandler implements RequestHandler<WebSocketProxyReq
      * @return a response from current lambda function
      */
     @Override
-    public APIGatewayProxyResponseEvent handleRequest(WebSocketProxyRequestEvent event, Context context) {
+    public WebSocketProxyResponseEvent handleRequest(WebSocketProxyRequestEvent event, Context context) {
         return WebSocketService.getInstance().processEvent(event);
     }
 }

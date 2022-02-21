@@ -5,6 +5,7 @@ buildscript {
         awsJavaSdkApiGatewayManagementApiVersion = '1.12.150'
         awsSdkCognitoIdentityVersion = '1.12.150'
         awsJavaSdkCoreVersion = '1.12.150'
+        okhttpVersion = '4.9.3'
     }
 }
 
@@ -12,7 +13,6 @@ plugins {
     id 'java'
     id "com.github.johnrengelman.shadow" version "5.0.0"
 }
-
 
 group = 'org.ideaslabut'
 version = '1.0.0-SNAPSHOT'
@@ -23,10 +23,10 @@ repositories {
 }
 
 dependencies {
-    implementation "com.amazonaws:aws-lambda-java-events:${awsLambdaJavaEventsVersion}"
     implementation "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}"
     implementation "com.amazonaws:aws-java-sdk-apigatewaymanagementapi:${awsJavaSdkApiGatewayManagementApiVersion}"
     implementation "com.amazonaws:aws-java-sdk-core:${awsJavaSdkCoreVersion}"
+    implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
 }
 
 shadowJar {
