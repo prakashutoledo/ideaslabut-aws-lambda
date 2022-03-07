@@ -37,6 +37,7 @@ dependencies {
 }
 
 shadowJar {
+    exclude "*.local.sample"
     destinationDirectory = file("${buildDir}/libs")
 }
 

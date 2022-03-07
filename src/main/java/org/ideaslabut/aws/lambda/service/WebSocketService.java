@@ -34,6 +34,7 @@ public class WebSocketService {
     private static final int HTTP_BAD_RESPONSE_STATUS_CODE = 400;
 
     private static final String APPLICATION_PROPERTIES_FILE = "application.properties";
+    private static final String APPLICATION_PROPERTIES_LOCAL_FILE = "application.properties.local";
     private static final String ELASTICSEARCH_URL = "elasticsearch.url";
     private static final String ELASTICSEARCH_AUTHENTICATION_KEY = "elasticsearch.authenticationKey";
     private static final String HTTP_METHOD_GET = "GET";
@@ -66,6 +67,7 @@ public class WebSocketService {
         var properties = new Properties();
         try {
             properties.load(WebSocketService.class.getResourceAsStream(APPLICATION_PROPERTIES_FILE));
+            properties.load(WebSocketService.class.getResourceAsStream(APPLICATION_PROPERTIES_LOCAL_FILE));
         } catch (IOException ignored) {
         }
 
