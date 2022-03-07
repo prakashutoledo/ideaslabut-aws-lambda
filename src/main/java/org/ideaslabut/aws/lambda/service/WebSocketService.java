@@ -149,8 +149,8 @@ public class WebSocketService {
             webSocketConnection.setConnectionId(connectionId);
             var body = RequestBody.Companion.create(objectMapper.writeValueAsString(webSocketConnection), MEDIA_TYPE_JSON);
             var elasticsearchURL = String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_create", connectionId);
-            var createResponse = okHttpClient.newCall(httpRequest(elasticsearchURL, HTTP_METHOD_POST, body)).execute();
-            responseStatusCode = createResponse.code();
+            var socketCreateResponse = okHttpClient.newCall(httpRequest(elasticsearchURL, HTTP_METHOD_POST, body)).execute();
+            responseStatusCode = socketCreateResponse.code();
         } catch (IOException exception) {
             responseStatusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
@@ -169,10 +169,10 @@ public class WebSocketService {
         int statusCode;
         try {
             var elasticsearchURL = String.format("%s/%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_doc", connectionId);
-            var deleteResponse = okHttpClient
+            var removeSocketResponse = okHttpClient
                     .newCall(httpRequest(elasticsearchURL, HTTP_METHOD_DELETE, null))
                     .execute();
-            statusCode = deleteResponse.code();
+            statusCode = removeSocketResponse.code();
         } catch (IOException e) {
             statusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
@@ -195,13 +195,13 @@ public class WebSocketService {
         int statusCode;
         try {
             var elasticsearchSocketSearchURL = String.format("%s/%s", properties.getProperty(ELASTICSEARCH_URL), "socket/_search");
-            var getResponse = okHttpClient
+            var socketSearchResponse = okHttpClient
                     .newCall(httpRequest(elasticsearchSocketSearchURL, HTTP_METHOD_GET, null))
                     .execute();
-            statusCode = getResponse.code();
+            statusCode = socketSearchResponse.code();
             if (statusCode == HTTP_OK_STATUS_CODE) {
                 var elasticsearchResponse = objectMapper
-                        .readValue(requireNonNull(getResponse.body()).string(), ElasticsearchResponse.class);
+                        .readValue(requireNonNull(socketSearchResponse.body()).string(), ElasticsearchResponse.class);
 
                 elasticsearchResponse.getHits()
                         .getHits().stream()
