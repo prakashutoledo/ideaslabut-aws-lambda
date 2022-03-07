@@ -221,7 +221,7 @@ public class WebSocketService {
      * @param body a message body to be sent to given connection id
      */
     private void sendMessage(String connectionId, Object body) {
-        PostToConnectionRequest connectionRequest = new PostToConnectionRequest()
+        var connectionRequest = new PostToConnectionRequest()
                 .withConnectionId(connectionId)
                 .withData(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8)));
 
@@ -239,7 +239,7 @@ public class WebSocketService {
      * @return a api gateway response event with given status code and empty body
      */
     private WebSocketProxyResponseEvent responseEvent(int statusCode) {
-        WebSocketProxyResponseEvent proxyResponseEvent = new WebSocketProxyResponseEvent();
+        var proxyResponseEvent = new WebSocketProxyResponseEvent();
         proxyResponseEvent.setBody("");
         proxyResponseEvent.setStatusCode(statusCode);
         proxyResponseEvent.setIsBase64Encoded(false);
