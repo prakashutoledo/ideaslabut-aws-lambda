@@ -1,16 +1,12 @@
 package org.ideaslabut.aws.lambda.service;
 
-import static com.amazonaws.regions.Regions.US_EAST_2;
+//import static com.amazonaws.regions.Regions.US_EAST_2;
+import static software.amazon.awssdk.regions.Region.US_EAST_2;
 import static java.util.Objects.requireNonNull;
 
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
-import com.amazonaws.services.apigatewaymanagementapi.AmazonApiGatewayManagementApi;
-import com.amazonaws.services.apigatewaymanagementapi.AmazonApiGatewayManagementApiClientBuilder;
-import com.amazonaws.services.apigatewaymanagementapi.model.PostToConnectionRequest;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
@@ -22,16 +18,22 @@ import org.ideaslabut.aws.lambda.domain.RouteKey;
 import org.ideaslabut.aws.lambda.domain.WebSocket;
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyResponseEvent;
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyRequestEvent;
-import org.ideaslabut.aws.lambda.domain.WebSocketRequestContext;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
+import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
+
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Properties;
 
 public class WebSocketService {
     private static final int HTTP_OK_STATUS_CODE = 200;
     private static final int HTTP_BAD_RESPONSE_STATUS_CODE = 400;
+    private static final int HTTP_PARTIAL_CONTENT_STATUS_CODE = 206;
 
     private static final String APPLICATION_PROPERTIES_FILE = "application.properties";
     private static final String APPLICATION_PROPERTIES_LOCAL_FILE = "application.properties.local";
@@ -71,13 +73,11 @@ public class WebSocketService {
         } catch (IOException ignored) {
         }
 
-        var endPointConfiguration = new EndpointConfiguration(properties.getProperty(WEBSOCKET_MANAGEMENT_URL), US_EAST_2.getName());
-        var apiGatewayManagementClient = AmazonApiGatewayManagementApiClientBuilder
-                .standard()
-                .withEndpointConfiguration(endPointConfiguration)
-                .build();
-        var objectMapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+       var apiGatewayManagementClient = ApiGatewayManagementApiClient.builder()
+               .region(US_EAST_2)
+               .endpointOverride(URI.create(properties.getProperty(WEBSOCKET_MANAGEMENT_URL)))
+               .build();
+        var objectMapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
         var okHttpClient = new OkHttpClient().newBuilder().cache(null).build();
         return new WebSocketService(objectMapper, apiGatewayManagementClient, okHttpClient, properties);
     }
@@ -85,13 +85,13 @@ public class WebSocketService {
     private final Properties properties;
     private final ObjectMapper objectMapper;
     private final OkHttpClient okHttpClient;
-    private final AmazonApiGatewayManagementApi amazonApiGatewayManagementApi;
+    private final ApiGatewayManagementApiClient apiGatewayManagementClient;
 
     public WebSocketService(ObjectMapper objectMapper,
-                            AmazonApiGatewayManagementApi amazonApiGatewayManagementApi,
+                            ApiGatewayManagementApiClient apiGatewayManagementClient,
                             OkHttpClient okHttpClient, Properties properties) {
         this.objectMapper = objectMapper;
-        this.amazonApiGatewayManagementApi = amazonApiGatewayManagementApi;
+        this.apiGatewayManagementClient = apiGatewayManagementClient;
         this.okHttpClient = okHttpClient;
         this.properties = properties;
     }
@@ -128,7 +128,7 @@ public class WebSocketService {
             case DISCONNECT:
                 return removeConnection(requestContext.getConnectionId());
             case SEND_MESSAGE:
-                return sendWebSocketMessage(webSocketProxyRequestEvent.getBody());
+                return sendWebSocketMessage(requestContext.getConnectionId(), webSocketProxyRequestEvent.getBody());
             default:
                 throw new IllegalStateException("Unsupported routeKey: " + routeKey);
         }
@@ -181,13 +181,15 @@ public class WebSocketService {
     }
 
     /**
-     * Sends the given message body to all available webSocket connections
+     * Sends the given message body to all available webSocket connections by filtering
+     * current sender
      *
+     * @param senderConnectionId A connection id of the sender to be filtered out
      * @param body a message body to be sent to all available connection
      *
      * @return an api gateway response event with status code 200 if successful
      */
-    private WebSocketProxyResponseEvent sendWebSocketMessage(final Object body) {
+    private WebSocketProxyResponseEvent sendWebSocketMessage(String senderConnectionId, final Object body) {
         if (body == null) {
             throw new NullPointerException("A valid message body is required");
         }
@@ -203,12 +205,16 @@ public class WebSocketService {
                 var elasticsearchResponse = objectMapper
                         .readValue(requireNonNull(socketSearchResponse.body()).string(), ElasticsearchResponse.class);
 
-                elasticsearchResponse.getHits()
+                var success = elasticsearchResponse.getHits()
                         .getHits().stream()
                         .map(hit -> hit.getSource().getConnectionId())
-                        .forEach(connectionId -> this.sendMessage(connectionId, body));
+                        .filter(connectionId -> connectionId != null && !connectionId.equals(senderConnectionId))
+                        .map(connectionId -> sendMessage(connectionId, body))
+                        .reduce(true, (partial, sendMessageStatus) -> partial && sendMessageStatus);
+
+                statusCode = success ? HTTP_OK_STATUS_CODE : HTTP_PARTIAL_CONTENT_STATUS_CODE;
             }
-        } catch (IOException ioe) {
+        } catch (IOException ignored) {
            statusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
         return responseEvent(statusCode);
@@ -219,15 +225,20 @@ public class WebSocketService {
      *
      * @param connectionId a webSocket connection to send given message body
      * @param body a message body to be sent to given connection id
+     *
+     * @return <code>true</code> if successful otherwise <code>false</code>
      */
-    private void sendMessage(String connectionId, Object body) {
-        var connectionRequest = new PostToConnectionRequest()
-                .withConnectionId(connectionId)
-                .withData(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8)));
+    private boolean sendMessage(String connectionId, Object body) {
+        var connectionRequest = PostToConnectionRequest.builder().connectionId(connectionId)
+                .data(SdkBytes.fromByteBuffer(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8))))
+                .build();
+
         try {
-            amazonApiGatewayManagementApi.postToConnection(connectionRequest);
+            apiGatewayManagementClient.postToConnection(connectionRequest);
         } catch (Exception ignored) {
+            return false;
         }
+        return true;
     }
 
     /**
