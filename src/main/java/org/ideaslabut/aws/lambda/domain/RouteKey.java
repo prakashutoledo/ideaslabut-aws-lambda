@@ -4,6 +4,8 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
+
 import static java.util.function.Function.identity;
 
 /**
@@ -34,7 +36,7 @@ public enum RouteKey {
         return action;
     }
 
-    public static RouteKey fromAction(String action) {
-        return ACTION_ROUTE_KEY_MAP.getOrDefault(action, null);
+    public static Optional<RouteKey> fromAction(String action) {
+        return Optional.ofNullable(ACTION_ROUTE_KEY_MAP.get(action));
     }
 }

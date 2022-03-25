@@ -115,14 +115,14 @@ public class WebSocketService {
             return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
-        WebSocketRequestContext requestContext = webSocketProxyRequestEvent.getRequestContext();
-        RouteKey routeKey = RouteKey.fromAction(webSocketProxyRequestEvent.getRequestContext().getRouteKey());
+        var requestContext = webSocketProxyRequestEvent.getRequestContext();
+        var routeKey = RouteKey.fromAction(webSocketProxyRequestEvent.getRequestContext().getRouteKey());
 
-        if (routeKey == null) {
+        if (routeKey.isEmpty()) {
             return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
-        switch (routeKey) {
+        switch (routeKey.get()) {
             case CONNECT:
                 return addConnection(requestContext.getConnectionId());
             case DISCONNECT:
@@ -224,7 +224,6 @@ public class WebSocketService {
         var connectionRequest = new PostToConnectionRequest()
                 .withConnectionId(connectionId)
                 .withData(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8)));
-
         try {
             amazonApiGatewayManagementApi.postToConnection(connectionRequest);
         } catch (Exception ignored) {
