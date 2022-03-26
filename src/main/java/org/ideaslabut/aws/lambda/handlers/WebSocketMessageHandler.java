@@ -18,6 +18,7 @@ public class WebSocketMessageHandler implements RequestHandler<WebSocketProxyReq
      */
     @Override
     public WebSocketProxyResponseEvent handleRequest(WebSocketProxyRequestEvent event, Context context) {
-        return WebSocketService.getInstance().processEvent(event);
+        var webSocketService = WebSocketService.getInstance();
+        return webSocketService.processEvent(event);
     }
 }

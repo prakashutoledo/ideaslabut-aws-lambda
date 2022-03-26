@@ -1,6 +1,5 @@
 package org.ideaslabut.aws.lambda.service;
 
-//import static com.amazonaws.regions.Regions.US_EAST_2;
 import static software.amazon.awssdk.regions.Region.US_EAST_2;
 import static java.util.Objects.requireNonNull;
 
@@ -87,7 +86,7 @@ public class WebSocketService {
     private final OkHttpClient okHttpClient;
     private final ApiGatewayManagementApiClient apiGatewayManagementClient;
 
-    public WebSocketService(ObjectMapper objectMapper,
+    private WebSocketService(ObjectMapper objectMapper,
                             ApiGatewayManagementApiClient apiGatewayManagementClient,
                             OkHttpClient okHttpClient, Properties properties) {
         this.objectMapper = objectMapper;
@@ -204,12 +203,11 @@ public class WebSocketService {
             if (statusCode == HTTP_OK_STATUS_CODE) {
                 var elasticsearchResponse = objectMapper
                         .readValue(requireNonNull(socketSearchResponse.body()).string(), ElasticsearchResponse.class);
-
-                var success = elasticsearchResponse.getHits()
-                        .getHits().stream()
+                var webSocketHits = elasticsearchResponse.getHits().getHits();
+                var success = webSocketHits.stream()
                         .map(hit -> hit.getSource().getConnectionId())
-                        .filter(connectionId -> connectionId != null && !connectionId.equals(senderConnectionId))
-                        .map(connectionId -> sendMessage(connectionId, body))
+                        .filter(Objects::nonNull)
+                        .map(connectionId -> sendMessage(connectionId, senderConnectionId, body))
                         .reduce(true, (partial, sendMessageStatus) -> partial && sendMessageStatus);
 
                 statusCode = success ? HTTP_OK_STATUS_CODE : HTTP_PARTIAL_CONTENT_STATUS_CODE;
@@ -223,13 +221,17 @@ public class WebSocketService {
     /**
      * Send the given message body to given webSocket connection id
      *
-     * @param connectionId a webSocket connection to send given message body
+     * @param toConnectionId a webSocket connection to send given message body
      * @param body a message body to be sent to given connection id
      *
      * @return <code>true</code> if successful otherwise <code>false</code>
      */
-    private boolean sendMessage(String connectionId, Object body) {
-        var connectionRequest = PostToConnectionRequest.builder().connectionId(connectionId)
+    private boolean sendMessage(String toConnectionId, String fromConnectionId, Object body) {
+        if (toConnectionId.equals(fromConnectionId)) {
+            return false;
+        }
+
+        var connectionRequest = PostToConnectionRequest.builder().connectionId(toConnectionId)
                 .data(SdkBytes.fromByteBuffer(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8))))
                 .build();
 
