@@ -3,7 +3,6 @@ package org.ideaslabut.aws.lambda.service;
 import static software.amazon.awssdk.regions.Region.US_EAST_2;
 import static java.util.Objects.requireNonNull;
 
-
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.MediaType;
@@ -20,7 +19,6 @@ import org.ideaslabut.aws.lambda.domain.WebSocketProxyRequestEvent;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
-
 
 import java.io.IOException;
 import java.net.URI;
@@ -94,7 +92,6 @@ public class WebSocketService {
         this.okHttpClient = okHttpClient;
         this.properties = properties;
     }
-
 
     /**
      * Process the given websocket proxy event by parsing defined routeKey. Default route key $connect and $disconnect
