@@ -1,5 +1,11 @@
 package org.ideaslabut.aws.lambda.domain;
 
+/**
+ * Pojo for AWS lambda function proxy request context
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketRequestContext {
     private String connectionId;
     private String routeKey;

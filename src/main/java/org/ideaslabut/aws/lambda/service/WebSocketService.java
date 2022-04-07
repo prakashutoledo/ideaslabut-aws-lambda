@@ -21,7 +21,6 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
 
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -29,6 +28,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Properties;
 
+/**
+ * Service class for managing webSocket request context route
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketService {
     private static final int HTTP_OK_STATUS_CODE = 200;
     private static final int HTTP_BAD_RESPONSE_STATUS_CODE = 400;
@@ -142,7 +147,6 @@ public class WebSocketService {
      */
     private WebSocketProxyResponseEvent addConnection(String connectionId) {
         int responseStatusCode;
-
         try {
             var webSocketConnection = new WebSocket();
             webSocketConnection.setConnectionId(connectionId);
@@ -153,7 +157,6 @@ public class WebSocketService {
         } catch (IOException exception) {
             responseStatusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
-
         return responseEvent(responseStatusCode);
     }
 
@@ -175,7 +178,6 @@ public class WebSocketService {
         } catch (IOException e) {
             statusCode = HTTP_BAD_RESPONSE_STATUS_CODE;
         }
-
         return responseEvent(statusCode);
     }
 
@@ -230,11 +232,9 @@ public class WebSocketService {
         if (toConnectionId.equals(fromConnectionId)) {
             return false;
         }
-
         var connectionRequest = PostToConnectionRequest.builder().connectionId(toConnectionId)
                 .data(SdkBytes.fromByteBuffer(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8))))
                 .build();
-
         try {
             apiGatewayManagementClient.postToConnection(connectionRequest);
         } catch (Exception ignored) {

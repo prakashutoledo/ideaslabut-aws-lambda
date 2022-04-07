@@ -7,8 +7,13 @@ import org.ideaslabut.aws.lambda.domain.WebSocketProxyRequestEvent;
 import org.ideaslabut.aws.lambda.domain.WebSocketProxyResponseEvent;
 import org.ideaslabut.aws.lambda.service.WebSocketService;
 
+/**
+ * AWS Lamba function request handler for handling webSocket request context route
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketMessageHandler implements RequestHandler<WebSocketProxyRequestEvent, WebSocketProxyResponseEvent> {
-    
     /**
      * Handles input request for given
      *

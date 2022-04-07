@@ -1,5 +1,11 @@
 package org.ideaslabut.aws.lambda.domain;
 
+/**
+ * Pojo holding webSocket connection details
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocket {
     private String connectionId;
 

@@ -13,6 +13,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+/**
+ * Unit test for WebSocketMessageHandler
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketMessageHandlerTest {
     @Mock
     private WebSocketService webSocketService;

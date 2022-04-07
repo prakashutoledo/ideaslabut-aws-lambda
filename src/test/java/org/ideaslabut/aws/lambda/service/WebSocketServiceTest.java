@@ -26,11 +26,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Spy;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
 
+/**
+ * Unit test for WebSocketService
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketServiceTest {
-    String fakeURL = "http://base-elasticsearch-url.com";
+    private String fakeURL = "http://base-elasticsearch-url.com";
 
     @Spy
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Spy
+    private final Properties properties = new Properties();
 
     @Mock
     private ApiGatewayManagementApiClient apiGatewayManagementApiClient;
@@ -44,9 +53,6 @@ public class WebSocketServiceTest {
     @Mock
     private Call remoteCall;
 
-    @Spy
-    private final Properties properties = new Properties();
-
     @InjectMocks
     private WebSocketService webSocketService;
 
@@ -54,7 +60,7 @@ public class WebSocketServiceTest {
     public void initMocks() {
         openMocks(this);
         properties.setProperty("elasticsearch.url", fakeURL);
-        properties.setProperty("elasticsearch.authenticationKey", "abcdefghi");
+        properties.setProperty("elasticsearch.authenticationKey", "fake-user:fake-password");
     }
 
     @Test
@@ -67,7 +73,6 @@ public class WebSocketServiceTest {
     void nullRouteKey() {
         var proxyRequestEvent = new WebSocketProxyRequestEvent();
         proxyRequestEvent.setRequestContext(new WebSocketRequestContext());
-
         verifyProxyResponseEvent(proxyResponseEvent(400), webSocketService.processEvent(proxyRequestEvent));
     }
 
@@ -76,14 +81,11 @@ public class WebSocketServiceTest {
         mockHttpClient(201, "", false);
         var actualProxyResponseEvent = webSocketService.processEvent(proxyRequestEvent("fake-body", requestContext("fake-id", "$connect")));
         verifyHttpClient();
-
         var websocket = new WebSocket();
         websocket.setConnectionId("fake-id");
         var expectedRequestBody = RequestBody.Companion.create(objectMapper.writeValueAsString(websocket), MediaType.get(String.format("%s; %s","application/json","charset=utf-8")));
         var expectedRequest = httpRequest("http://base-elasticsearch-url.com/socket/_create/fake-id", "POST", expectedRequestBody);
-
         verifyRequest(expectedRequest, requestArgumentCaptor.getValue());
-
         var actualWebSocket = objectMapper.readValue(requestBodyToString(requestArgumentCaptor.getValue()), WebSocket.class);
         assertEquals(websocket.getConnectionId(), actualWebSocket.getConnectionId());
         verifyProxyResponseEvent(proxyResponseEvent(201), actualProxyResponseEvent);
@@ -93,7 +95,6 @@ public class WebSocketServiceTest {
     void removeWebSocketConnection() throws IOException {
         mockHttpClient(200, "", false);
         var actualProxyResponse = webSocketService.processEvent(proxyRequestEvent("fake-body", requestContext("fake-id-1", "$disconnect")));
-
         verifyHttpClient();
         verifyRequest(httpRequest("http://base-elasticsearch-url.com/socket/_doc/fake-id-1", "DELETE", null), requestArgumentCaptor.getValue());
         verifyProxyResponseEvent(proxyResponseEvent(200), actualProxyResponse);
@@ -133,11 +134,9 @@ public class WebSocketServiceTest {
     private void verifyRequest(Request expected, Request actual) {
         assertNotNull(actual, "Actual request should not be null");
         assertNotNull(expected, "Expected request should not be null");
-
         assertEquals(expected.url(), actual.url());
         var actualHeaders = actual.headers();
         var expectedHeaders = expected.headers();
-
         assertEquals(expectedHeaders.get("Cache-Control"), actualHeaders.get("Cache-Control"));
         assertEquals(expectedHeaders.get("Authorization"), actualHeaders.get("Authorization"));
         assertEquals(expectedHeaders.get("Content-Type"), actualHeaders.get("Content-Type"));
@@ -173,12 +172,13 @@ public class WebSocketServiceTest {
     }
 
     private String requestBodyToString(Request request) {
-        String body = null;
+        String body;
         try(var buffer = new Buffer()) {
             var requestCopy = request.newBuilder().build();
             Objects.requireNonNull(requestCopy.body()).writeTo(buffer);
             body = buffer.readUtf8();
         } catch (IOException ignored) {
+            body = null;
         }
         return body;
     }

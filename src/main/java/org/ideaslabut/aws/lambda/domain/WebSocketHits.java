@@ -2,6 +2,12 @@ package org.ideaslabut.aws.lambda.domain;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
+/**
+ * Pojo that mimics Elasticsearch search hits source json node
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketHits {
     @JsonAlias("_source")
     private WebSocket source;

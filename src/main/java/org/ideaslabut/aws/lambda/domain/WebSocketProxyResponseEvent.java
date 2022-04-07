@@ -1,5 +1,11 @@
 package org.ideaslabut.aws.lambda.domain;
 
+/**
+ * Pojo proxy response for AWS Lambda function handler
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class WebSocketProxyResponseEvent {
     private Integer statusCode;
     private Boolean isBase64Encoded;
