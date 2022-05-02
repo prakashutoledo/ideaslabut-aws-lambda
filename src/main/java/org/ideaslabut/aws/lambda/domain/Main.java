@@ -19,7 +19,6 @@ public class Main {
         long startTime = System.currentTimeMillis();
         var totalElementSearch =  SearchRequest.newBuilder().withSize(1).withIndex("socket").build();
         var totalElementSearchRequest = ElasticsearchService.getInstance().search(totalElementSearch);
-
         if (totalElementSearchRequest.isEmpty() || totalElementSearchRequest.get().getHits().getTotal().getValue() <= 0) {
             return;
         }
