@@ -17,6 +17,14 @@ public abstract class ScrollableRequest extends IndexableRequest {
 
     private String scroll;
 
+    protected ScrollableRequest() {
+    }
+
+    protected ScrollableRequest(Builder builder) {
+        super(builder);
+        setScroll(builder.scroll);
+    }
+
     public String getScroll() {
         return scroll;
     }

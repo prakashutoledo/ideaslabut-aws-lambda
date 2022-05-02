@@ -27,13 +27,8 @@ public class SearchRequest extends ScrollableRequest {
     private long size;
 
     private SearchRequest(Builder builder) {
-        setIndex(builder.index);
-        setScroll(builder.scroll);
-        setIndex(builder.index);
+        super(builder);
         setSize(builder.size);
-        setSuccessConsumer(builder.successConsumer);
-        setExceptionConsumer(builder.exceptionConsumer);
-        setErrorConsumer(builder.errorConsumer);
     }
 
     public long getSize() {

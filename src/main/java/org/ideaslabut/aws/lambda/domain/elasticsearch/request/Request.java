@@ -31,6 +31,16 @@ public abstract class Request {
         public abstract R build();
     }
 
+    protected Request() {
+
+    }
+
+    protected Request(BaseBuilder baseBuilder) {
+        setErrorConsumer(baseBuilder.errorConsumer);
+        setSuccessConsumer(baseBuilder.successConsumer);
+        setExceptionConsumer(baseBuilder.exceptionConsumer);
+    }
+
     private Consumer<Exception> exceptionConsumer;
     private Consumer<HttpResponse<String>> errorConsumer;
     private Consumer<HttpResponse<String>> successConsumer;

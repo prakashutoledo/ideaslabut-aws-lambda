@@ -19,10 +19,6 @@ public class DeleteRequest <C extends Connection> extends CreateRequest<C> {
     }
 
     private DeleteRequest(Builder<C> builder) {
-        setIndex(builder.index);
-        setBody(builder.body);
-        setExceptionConsumer(builder.exceptionConsumer);
-        setErrorConsumer(builder.errorConsumer);
-        setSuccessConsumer(builder.successConsumer);
+        super(builder);
     }
 }

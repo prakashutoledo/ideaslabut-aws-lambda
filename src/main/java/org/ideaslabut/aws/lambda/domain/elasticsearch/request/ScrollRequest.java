@@ -26,11 +26,8 @@ public class ScrollRequest extends ScrollableRequest {
     private String scrollId;
 
     private ScrollRequest(Builder builder) {
+        super(builder);
         setScrollId(builder.scrollId);
-        setScroll(builder.scroll);
-        setSuccessConsumer(builder.successConsumer);
-        setExceptionConsumer(builder.exceptionConsumer);
-        setErrorConsumer(builder.errorConsumer);
     }
 
     public String getScrollId() {

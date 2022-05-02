@@ -17,6 +17,11 @@ public abstract class IndexableRequest extends Request {
     protected IndexableRequest() {
     }
 
+    protected IndexableRequest(Builder builder) {
+        super(builder);
+        setIndex(builder.index);
+    }
+
     private String Index;
 
     public String getIndex() {
