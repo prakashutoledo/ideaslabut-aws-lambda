@@ -93,6 +93,10 @@ public class ElasticsearchService {
     }
 
     public void searchAll(SearchRequest searchRequest, Consumer<Response> responseConsumer, Consumer<Void> onComplete) {
+        if (searchRequest.getScroll() == null) {
+            return;
+        }
+        
         var search = search(searchRequest);
         if (search.isEmpty()) {
             return;
@@ -106,6 +110,9 @@ public class ElasticsearchService {
 
         var scrollRequest = ScrollRequest.newBuilder()
                 .withScroll(searchRequest.getScroll())
+                .onException(searchRequest.getExceptionConsumer())
+                .onHttpError(searchRequest.getErrorConsumer())
+                .onHttpSuccess(searchRequest.getSuccessConsumer())
                 .withIndex(searchRequest.getIndex())
                 .build();
 

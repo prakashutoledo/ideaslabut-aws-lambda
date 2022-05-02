@@ -105,7 +105,6 @@ public class ProgressBar {
     }
 
     public void initStartTime(long millis) {
-
         this.startTime = millis;
     }
 
