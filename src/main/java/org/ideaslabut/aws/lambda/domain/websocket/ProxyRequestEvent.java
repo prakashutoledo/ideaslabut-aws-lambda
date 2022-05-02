@@ -1,4 +1,4 @@
-package org.ideaslabut.aws.lambda.domain;
+package org.ideaslabut.aws.lambda.domain.websocket;
 
 /**
  * Pojo proxy request input for AWS Lambda function handler
@@ -6,15 +6,15 @@ package org.ideaslabut.aws.lambda.domain;
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022
  */
-public class WebSocketProxyRequestEvent {
-    private WebSocketRequestContext requestContext;
+public class ProxyRequestEvent {
+    private RequestContext requestContext;
     private Object body;
 
-    public WebSocketRequestContext getRequestContext() {
+    public RequestContext getRequestContext() {
         return requestContext;
     }
 
-    public void setRequestContext(WebSocketRequestContext requestContext) {
+    public void setRequestContext(RequestContext requestContext) {
         this.requestContext = requestContext;
     }
 

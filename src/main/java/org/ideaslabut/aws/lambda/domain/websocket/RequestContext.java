@@ -1,4 +1,4 @@
-package org.ideaslabut.aws.lambda.domain;
+package org.ideaslabut.aws.lambda.domain.websocket;
 
 /**
  * Pojo for AWS lambda function proxy request context
@@ -6,7 +6,7 @@ package org.ideaslabut.aws.lambda.domain;
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022
  */
-public class WebSocketRequestContext {
+public class RequestContext {
     private String connectionId;
     private String routeKey;
 

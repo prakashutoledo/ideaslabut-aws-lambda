@@ -1,4 +1,4 @@
-package org.ideaslabut.aws.lambda.domain;
+package org.ideaslabut.aws.lambda.domain.websocket;
 
 /**
  * Pojo proxy response for AWS Lambda function handler
@@ -6,7 +6,7 @@ package org.ideaslabut.aws.lambda.domain;
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022
  */
-public class WebSocketProxyResponseEvent {
+public class ProxyResponseEvent {
     private Integer statusCode;
     private Boolean isBase64Encoded;
     private String body;

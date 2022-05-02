@@ -1,6 +1,8 @@
-package org.ideaslabut.aws.lambda.domain;
+package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+
+import java.util.Map;
 
 /**
  * Pojo that mimics Elasticsearch search hits source json node
@@ -8,15 +10,15 @@ import com.fasterxml.jackson.annotation.JsonAlias;
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022
  */
-public class WebSocketHits {
+public class SourceHits {
     @JsonAlias("_source")
-    private WebSocket source;
+    private Map<String, String> source;
 
-    public WebSocket getSource() {
+    public Map<String, String> getSource() {
         return source;
     }
 
-    public void setSource(WebSocket source) {
+    public void setSource(Map<String, String> source) {
         this.source = source;
     }
 

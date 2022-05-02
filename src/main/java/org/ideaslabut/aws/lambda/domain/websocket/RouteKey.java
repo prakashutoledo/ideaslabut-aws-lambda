@@ -1,4 +1,4 @@
-package org.ideaslabut.aws.lambda.domain;
+package org.ideaslabut.aws.lambda.domain.websocket;
 
 import static java.util.stream.Collectors.toMap;
 
