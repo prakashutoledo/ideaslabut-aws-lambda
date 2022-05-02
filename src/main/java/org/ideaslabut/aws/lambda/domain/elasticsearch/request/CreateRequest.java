@@ -31,7 +31,6 @@ public class CreateRequest<C extends Connection> extends IndexableRequest {
         return new Builder<>();
     }
 
-    private String index;
     private C body;
 
     protected CreateRequest(BaseBuilder builder) {
@@ -39,19 +38,8 @@ public class CreateRequest<C extends Connection> extends IndexableRequest {
     }
 
     protected CreateRequest(Builder<C> builder) {
-        setIndex(builder.index);
+        super(builder);
         setBody(builder.body);
-        setExceptionConsumer(builder.exceptionConsumer);
-        setErrorConsumer(builder.errorConsumer);
-        setSuccessConsumer(builder.successConsumer);
-    }
-
-    public String getIndex() {
-        return index;
-    }
-
-    public void setIndex(String index) {
-        this.index = index;
     }
 
     public C getBody() {
