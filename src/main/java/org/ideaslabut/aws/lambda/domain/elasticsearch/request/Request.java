@@ -32,7 +32,6 @@ public abstract class Request {
     }
 
     protected Request() {
-
     }
 
     protected Request(BaseBuilder baseBuilder) {
