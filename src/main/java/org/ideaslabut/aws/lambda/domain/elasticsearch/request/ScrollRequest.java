@@ -1,7 +1,7 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
-public class ScrollRequest extends ScrollableRequest {
-    public static class Builder extends ScrollableRequest.Builder<ScrollRequest, Builder> {
+public class ScrollRequest extends Scrollable {
+    public static class Builder extends Scrollable.Builder<ScrollRequest, Builder> {
         private String scrollId;
 
         private Builder() {

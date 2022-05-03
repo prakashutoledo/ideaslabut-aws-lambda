@@ -1,10 +1,10 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
-@SuppressWarnings("unchecked")
-public abstract class IndexableRequest extends Request {
-    public static abstract class Builder<I extends IndexableRequest, B extends Builder<I, B>> extends Request.BaseBuilder<I, B> {
+public abstract class Indexable extends Request {
+    public static abstract class Builder<I extends Indexable, B extends Builder<I, B>> extends Request.BaseBuilder<I, B> {
         protected String index;
 
+        @SuppressWarnings("unchecked")
         public B withIndex(String index)  {
             this.index = index;
             return (B) this;
@@ -14,10 +14,10 @@ public abstract class IndexableRequest extends Request {
         public abstract I build();
     }
 
-    protected IndexableRequest() {
+    protected Indexable() {
     }
 
-    protected IndexableRequest(Builder builder) {
+    protected Indexable(Builder<?, ?> builder) {
         super(builder);
         setIndex(builder.index);
     }

@@ -3,8 +3,8 @@ package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unchecked")
 public abstract class Request {
-    @SuppressWarnings("unchecked")
     protected static abstract class BaseBuilder<R extends Request, B extends BaseBuilder<R, B>> {
         protected Consumer<Exception> exceptionConsumer;
         protected Consumer<HttpResponse<String>> errorConsumer;
@@ -31,18 +31,18 @@ public abstract class Request {
         public abstract R build();
     }
 
+    private Consumer<Exception> exceptionConsumer;
+    private Consumer<HttpResponse<String>> errorConsumer;
+    private Consumer<HttpResponse<String>> successConsumer;
+    
     protected Request() {
     }
 
-    protected Request(BaseBuilder baseBuilder) {
+    protected Request(BaseBuilder<?, ?> baseBuilder) {
         setErrorConsumer(baseBuilder.errorConsumer);
         setSuccessConsumer(baseBuilder.successConsumer);
         setExceptionConsumer(baseBuilder.exceptionConsumer);
     }
-
-    private Consumer<Exception> exceptionConsumer;
-    private Consumer<HttpResponse<String>> errorConsumer;
-    private Consumer<HttpResponse<String>> successConsumer;
 
     public Consumer<Exception> getExceptionConsumer() {
         return exceptionConsumer;

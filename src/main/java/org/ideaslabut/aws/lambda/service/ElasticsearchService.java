@@ -96,15 +96,15 @@ public class ElasticsearchService {
         if (searchRequest.getScroll() == null) {
             return;
         }
-        
+
         var search = search(searchRequest);
         if (search.isEmpty()) {
             return;
         }
 
         var response = search.get();
-
-        if(response.getHits().getTotal().getValue() == 0L) {
+        var totalCount = response.getHits().getTotal().getValue();
+        if(totalCount == 0L) {
             return;
         }
 
@@ -115,8 +115,10 @@ public class ElasticsearchService {
                 .onHttpSuccess(searchRequest.getSuccessConsumer())
                 .withIndex(searchRequest.getIndex())
                 .build();
+        long count = 0;
 
-        while(!response.getHits().getHits().isEmpty()) {
+        while(count != totalCount) {
+            count += response.getHits().getHits().size();
             if (responseConsumer != null) {
                 responseConsumer.accept(response);
             }

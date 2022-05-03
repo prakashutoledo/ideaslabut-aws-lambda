@@ -1,8 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 @SuppressWarnings("unchecked")
-public abstract class ScrollableRequest extends IndexableRequest {
-    public static abstract class Builder<S extends ScrollableRequest, B extends Builder<S, B>> extends IndexableRequest.Builder<S, B> {
+public abstract class Scrollable extends Indexable {
+    public static abstract class Builder<S extends Scrollable, B extends Builder<S, B>> extends Indexable.Builder<S, B> {
         protected String scroll;
 
         protected Builder() {
@@ -17,10 +17,10 @@ public abstract class ScrollableRequest extends IndexableRequest {
 
     private String scroll;
 
-    protected ScrollableRequest() {
+    protected Scrollable() {
     }
 
-    protected ScrollableRequest(Builder builder) {
+    protected Scrollable(Builder builder) {
         super(builder);
         setScroll(builder.scroll);
     }

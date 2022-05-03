@@ -72,7 +72,7 @@ public class ProgressBar {
         this.printStream = Objects.requireNonNull(printStream, "Print stream should not be null");
         this.maxStep = validateMaxStep(maxStep);
         this.totalElement = validateTotalElement(totalElement);
-        this.format = (prefix == null ? "" : prefix)+ " [%-" + this.maxStep + "s]" + " [%" +
+        this.format = (prefix == null ? "" : prefix) + " [%-" + this.maxStep + "s]" + " [%" +
                 String.valueOf(totalElement).length() + "d/" +
                 totalElement + "] [%3d%%] [%s]\r";
         this.delimiterBuilder = new StringBuilder();

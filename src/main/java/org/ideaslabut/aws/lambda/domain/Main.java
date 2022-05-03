@@ -1,8 +1,8 @@
 package org.ideaslabut.aws.lambda.domain;
 
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
-import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.SourceHits;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
 import org.ideaslabut.aws.lambda.service.CSVWriter;
 import org.ideaslabut.aws.lambda.service.ElasticsearchService;
 import org.ideaslabut.aws.lambda.service.ProgressBar;
@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class Main {
 
     public static void main(String... main) throws Exception {
+        System.out.println("rere");
         long startTime = System.currentTimeMillis();
         var totalElementSearch =  SearchRequest.newBuilder().withSize(1).withIndex("socket").build();
         var totalElementSearchRequest = ElasticsearchService.getInstance().search(totalElementSearch);

@@ -2,8 +2,8 @@ package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 import org.ideaslabut.aws.lambda.domain.websocket.Connection;
 
-public class DeleteRequest <C extends Connection> extends CreateRequest<C> {
-    public static class Builder<C extends Connection> extends CreateRequest.BaseBuilder<C, DeleteRequest<C>, Builder<C>>{
+public class DeleteRequest<C extends Connection> extends CreateRequest<C> {
+    public static class Builder<C extends Connection> extends BodyBuilder<C, DeleteRequest<C>, Builder<C>> {
         @Override
         public DeleteRequest<C> build() {
             return new DeleteRequest<>(this);
@@ -14,7 +14,7 @@ public class DeleteRequest <C extends Connection> extends CreateRequest<C> {
         return newDeleteBuilder(Connection.class);
     }
 
-    public static <B extends Connection> Builder<B> newDeleteBuilder(Class<B> klass) {
+    public static <C extends Connection> Builder<C> newDeleteBuilder(Class<C> klass) {
         return new Builder<>();
     }
 

@@ -1,6 +1,7 @@
 package org.ideaslabut.aws.lambda.service;
 
 import static software.amazon.awssdk.regions.Region.US_EAST_2;
+
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.CreateRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.DeleteRequest;
@@ -9,6 +10,7 @@ import org.ideaslabut.aws.lambda.domain.websocket.Connection;
 import org.ideaslabut.aws.lambda.domain.websocket.ProxyRequestEvent;
 import org.ideaslabut.aws.lambda.domain.websocket.ProxyResponseEvent;
 import org.ideaslabut.aws.lambda.domain.websocket.RouteKey;
+
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
@@ -171,8 +173,8 @@ public class WebSocketService {
             statusList.add(status);
         };
 
-        elasticsearchService.searchAll(SearchRequest.newBuilder().withSize(10).withIndex("socket").withScroll("1m").build(), responseConsumer, null);
-        return responseEvent(statusList.stream().allMatch(value -> value) ? HTTP_OK_STATUS_CODE : HTTP_PARTIAL_CONTENT_STATUS_CODE);
+        elasticsearchService.searchAll(SearchRequest.newBuilder().withSize(10).withIndex(WEB_SOCKET_INDEX_NAME).withScroll("1m").build(), responseConsumer, null);
+        return responseEvent(statusList.stream().anyMatch(value -> !value) ? HTTP_PARTIAL_CONTENT_STATUS_CODE : HTTP_OK_STATUS_CODE);
     }
 
     /**
@@ -186,7 +188,9 @@ public class WebSocketService {
         if (toConnectionId.equals(fromConnectionId)) {
             return false;
         }
-        var connectionRequest = PostToConnectionRequest.builder().connectionId(toConnectionId)
+        var connectionRequest = PostToConnectionRequest
+                .builder()
+                .connectionId(toConnectionId)
                 .data(SdkBytes.fromByteBuffer(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8))))
                 .build();
         try {

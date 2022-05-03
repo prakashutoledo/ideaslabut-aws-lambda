@@ -14,6 +14,7 @@ buildscript {
 plugins {
     id 'java'
     id "io.spring.dependency-management" version "${dependencyManagementPluginVersion}"
+    id 'org.javamodularity.moduleplugin' version '1.8.10'
 }
 
 group = 'org.ideaslabut'
@@ -32,17 +33,16 @@ repositories {
 }
 
 dependencies {
-    implementation "software.amazon.awssdk:sdk-core"
-    implementation "software.amazon.awssdk:apigatewaymanagementapi"
+    implementation 'software.amazon.awssdk:sdk-core'
+    implementation 'software.amazon.awssdk:apigatewaymanagementapi'
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     implementation "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}"
     implementation "org.slf4j:slf4j-simple:${slf4jSimpleVersion}"
 
-    testImplementation "org.junit.jupiter:junit-jupiter-api"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
     testImplementation "org.mockito:mockito-inline:${mockitoInlineVersion}"
-
 }
 
 task lambdaJar(type: Jar) {
@@ -50,18 +50,26 @@ task lambdaJar(type: Jar) {
     archivesBaseName = project.name
     destinationDirectory = project.file("${project.buildDir}/libs")
 
-
-    manifest {
-        attributes 'Implementation-Version': project.version, 'Implementation-Title': project.name
-    }
-
     from project.sourceSets.main.output
     from {
         project.configurations.runtimeClasspath.collect {
             it.isDirectory() ? it : project.zipTree(it)
         }
     }
-    exclude "**/Main.class", "**/**.sample", "**/ProgressBar**.class",  "**/CSVWriter**.class"
+    exclude '**/Main.class', '**/**.sample', '**/ProgressBar**.class',  '**/CSVWriter**.class'
+}
+
+task lambdaZip(type: Zip) {
+    archivesBaseName = project.name
+    destinationDirectory = project.file("${project.buildDir}/libs")
+
+    from project.sourceSets.main.output
+
+    into('lib') {
+        from project.configurations.runtimeClasspath
+    }
+
+    exclude '**/Main.class', '**/**.sample', '**/ProgressBar**.class',  '**/CSVWriter**.class'
 }
 
 task extractElasticsearchData(type: JavaExec) {
@@ -70,5 +78,8 @@ task extractElasticsearchData(type: JavaExec) {
 }
 
 test {
+    moduleOptions {
+        runOnClasspath = true
+    }
     useJUnitPlatform()
 }
