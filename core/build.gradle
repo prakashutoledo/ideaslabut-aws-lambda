@@ -1,0 +1,12 @@
+apply plugin: 'java-library'
+
+dependencies {
+    api 'software.amazon.awssdk:sdk-core'
+    api 'software.amazon.awssdk:apigatewaymanagementapi'
+    api "com.fasterxml.jackson.core:jackson-databind"
+    api "com.amazonaws:aws-lambda-java-core"
+}
+
+jar {
+    exclude '**/**.sample'
+}

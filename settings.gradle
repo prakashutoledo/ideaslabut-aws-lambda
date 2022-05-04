@@ -1,1 +1,5 @@
+['core', 'extractor-util', 'elasticsearch-to-csv', 'websocket-lambda'].each {
+    include "${it}"
+}
+
 rootProject.name = 'ideaslabut-aws-lambda'

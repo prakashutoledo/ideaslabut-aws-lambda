@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(":core")
+    implementation project(":extractor-util")
+}
+
+task extractElasticsearchData(type: JavaExec) {
+    mainClass = "org.ideaslabut.aws.lambda.domain.Main"
+    classpath = sourceSets.main.runtimeClasspath
+}

@@ -1,0 +1,28 @@
+dependencies {
+    implementation project(":core")
+    implementation "com.amazonaws:aws-lambda-java-core"
+    implementation "org.slf4j:slf4j-simple"
+}
+
+task lambdaJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archivesBaseName = project.name
+    destinationDirectory = project.file("${project.buildDir}/libs")
+
+    from project.sourceSets.main.output
+    from {
+        project.configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : project.zipTree(it)
+        }
+    }
+}
+
+task lambdaZip(type: Zip) {
+    // https://docs.aws.amazon.com/lambda/latest/dg/java-package.html
+    archivesBaseName = project.name
+    destinationDirectory = project.file("${project.buildDir}/libs")
+    from project.sourceSets.main.output
+    into('lib') {
+        from project.configurations.runtimeClasspath
+    }
+}
