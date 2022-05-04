@@ -18,9 +18,11 @@ plugins {
     id 'org.javamodularity.moduleplugin' version "${modulePluginVersion}" apply false
 }
 
-group = 'org.ideaslabut'
-version = '1.0.0-SNAPSHOT'
-sourceCompatibility = '11'
+allprojects {
+    group = 'org.ideaslabut'
+    version = '1.0.0-SNAPSHOT'
+    sourceCompatibility = '11'
+}
 
 afterEvaluate {
     subprojects {
