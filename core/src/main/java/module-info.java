@@ -2,8 +2,8 @@ module ideaslabut.aws.lambda.core {
     requires transitive java.net.http;
     requires transitive com.fasterxml.jackson.databind;
 
-
     // Below 4 are automatic modules
+    requires org.apache.commons.lang3;
     requires org.slf4j;
     requires software.amazon.awssdk.core;
     requires software.amazon.awssdk.services.apigatewaymanagementapi;

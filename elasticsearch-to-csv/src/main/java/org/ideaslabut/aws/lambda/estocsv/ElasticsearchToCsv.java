@@ -7,6 +7,9 @@ import org.ideaslabut.aws.lambda.service.ElasticsearchService;
 
 import org.ideaslabut.aws.lambda.extractor.util.CSVWriter;
 import org.ideaslabut.aws.lambda.extractor.util.ProgressBar;
+import org.ideaslabut.aws.lambda.service.WebSocketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -14,9 +17,13 @@ import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+
 public class ElasticsearchToCsv {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchToCsv.class);
+
     public static void main(String... main) throws Exception {
         long startTime = System.currentTimeMillis();
+        LOGGER.info("Response event {}", WebSocketService.getInstance().processEvent(null));
         var totalElementSearch =  SearchRequest.newBuilder().withSize(1).withIndex("socket").build();
         var totalElementSearchRequest = ElasticsearchService.getInstance().search(totalElementSearch);
         if (totalElementSearchRequest.isEmpty() || totalElementSearchRequest.get().getHits().getTotal().getValue() <= 0) {

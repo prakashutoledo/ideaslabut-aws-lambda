@@ -1,5 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.websocket;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 /**
  * Pojo for AWS lambda function proxy request context
  *
@@ -9,6 +12,7 @@ package org.ideaslabut.aws.lambda.domain.websocket;
 public class RequestContext {
     private String connectionId;
     private String routeKey;
+    private String domainName;
 
     public String getConnectionId() {
         return connectionId;
@@ -26,12 +30,16 @@ public class RequestContext {
         this.routeKey = routeKey;
     }
 
+    public String getDomainName() {
+        return domainName;
+    }
+
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
+    }
+
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("connectionId='").append(connectionId).append('\'');
-        sb.append(", routeKey='").append(routeKey).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }

@@ -66,7 +66,7 @@ public class ElasticsearchService {
     }
 
     public Optional<Response> search(SearchRequest searchRequest) {
-        LOGGER.info("Search elasticsearch for request {}", "test");
+        LOGGER.info("Search elasticsearch for request {}", searchRequest);
         if (searchRequest == null || searchRequest.getIndex() == null) {
             Optional.empty();
         }

@@ -1,5 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
@@ -66,5 +69,10 @@ public abstract class Request {
 
     public void setSuccessConsumer(Consumer<HttpResponse<String>> successConsumer) {
         this.successConsumer = successConsumer;
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }

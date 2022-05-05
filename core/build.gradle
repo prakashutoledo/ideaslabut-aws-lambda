@@ -4,6 +4,8 @@ dependencies {
     api 'software.amazon.awssdk:sdk-core'
     api 'software.amazon.awssdk:apigatewaymanagementapi'
     api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'org.apache.commons:commons-lang3'
+
     api 'org.slf4j:slf4j-api'
 }
 

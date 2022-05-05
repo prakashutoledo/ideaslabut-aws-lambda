@@ -1,6 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.util.Map;
 
@@ -24,9 +26,6 @@ public class SourceHits {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("source=").append(source);
-        sb.append('}');
-        return sb.toString();
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }

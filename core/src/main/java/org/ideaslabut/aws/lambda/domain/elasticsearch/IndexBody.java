@@ -1,6 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Pojo holding webSocket connection details
@@ -22,9 +24,6 @@ public class IndexBody {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("connectionId='").append(id).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }

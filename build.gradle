@@ -2,6 +2,7 @@ buildscript {
     ext {
         awsLambdaJavaCoreVersion = '1.2.1'
         awssdkBomVersion = '2.17.156'
+        commonsLang3Version = '3.12.0'
         awsLambdaJavaLog4j2Version='1.5.0'
         jacksonDatabindVersion = '2.13.2'
         junitBomVersion = '5.8.2'
@@ -40,6 +41,7 @@ afterEvaluate {
                 dependency "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
                 dependency "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}"
                 dependency "com.amazonaws:aws-lambda-java-log4j2:${awsLambdaJavaLog4j2Version}"
+                dependency "org.apache.commons:commons-lang3:${commonsLang3Version}"
             }
 
             imports {

@@ -2,6 +2,8 @@ package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Class that mimic Elasticsearch search api response with hits value only
@@ -32,10 +34,6 @@ public class Response {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("scrollId='").append(scrollId).append('\'');
-        sb.append(", hits=").append(hits);
-        sb.append('}');
-        return sb.toString();
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }

@@ -1,5 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.websocket;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 /**
  * Pojo proxy response for AWS Lambda function handler
  *
@@ -37,11 +40,6 @@ public class ProxyResponseEvent {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("statusCode=").append(statusCode);
-        sb.append(", isBase64Encoded=").append(isBase64Encoded);
-        sb.append(", body='").append(body).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }

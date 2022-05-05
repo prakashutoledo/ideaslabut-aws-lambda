@@ -1,3 +1,13 @@
+pluginManagement {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+
+        mavenCentral()
+    }
+}
+
 ['core', 'extractor-util', 'elasticsearch-to-csv', 'websocket-lambda'].each {
     include "${it}"
 }

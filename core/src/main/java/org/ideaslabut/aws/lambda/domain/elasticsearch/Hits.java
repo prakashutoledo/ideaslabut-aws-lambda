@@ -1,5 +1,8 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 import java.util.List;
 
 /**
@@ -30,10 +33,6 @@ public class Hits {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("{");
-        sb.append("total=").append(total);
-        sb.append(", hits=").append(hits);
-        sb.append('}');
-        return sb.toString();
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
     }
 }
