@@ -1,14 +1,18 @@
 dependencies {
-    implementation project(":core")
-    implementation "com.amazonaws:aws-lambda-java-core"
-    implementation "org.slf4j:slf4j-simple"
+    implementation project(':core')
+
+    implementation 'com.amazonaws:aws-lambda-java-core'
+    implementation 'org.apache.logging.log4j:log4j-api'
+    implementation 'org.apache.logging.log4j:log4j-core'
+
+    runtimeOnly 'org.apache.logging.log4j:log4j-slf4j18-impl'
+    runtimeOnly 'com.amazonaws:aws-lambda-java-log4j2'
 }
 
 task lambdaJar(type: Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archivesBaseName = project.name
     destinationDirectory = project.file("${project.buildDir}/libs")
-
     from project.sourceSets.main.output
     from {
         project.configurations.runtimeClasspath.collect {

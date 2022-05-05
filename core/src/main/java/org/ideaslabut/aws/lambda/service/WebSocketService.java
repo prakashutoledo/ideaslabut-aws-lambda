@@ -2,6 +2,7 @@ package org.ideaslabut.aws.lambda.service;
 
 import static software.amazon.awssdk.regions.Region.US_EAST_2;
 
+import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.CreateRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.DeleteRequest;
@@ -16,8 +17,6 @@ import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConne
 
 import java.net.URI;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -138,7 +137,7 @@ public class WebSocketService {
         Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
 
         elasticsearchService.delete(DeleteRequest
-                .newDeleteBuilder(Response.IndexBody.class)
+                .newDeleteBuilder(IndexBody.class)
                 .withBody(connection(connectionId))
                 .onHttpError(responseConsumer)
                 .onHttpSuccess(responseConsumer)
@@ -190,7 +189,7 @@ public class WebSocketService {
         var connectionRequest = PostToConnectionRequest
                 .builder()
                 .connectionId(toConnectionId)
-                .data(SdkBytes.fromByteBuffer(ByteBuffer.wrap(body.toString().getBytes(StandardCharsets.UTF_8))))
+                .data(SdkBytes.fromUtf8String(body.toString()))
                 .build();
         try {
             apiGatewayManagementClient.postToConnection(connectionRequest);
@@ -215,8 +214,8 @@ public class WebSocketService {
         return proxyResponseEvent;
     }
 
-    private Response.IndexBody connection(String connectionId) {
-        var connection = new Response.IndexBody();
+    private IndexBody connection(String connectionId) {
+        var connection = new IndexBody();
         connection.setId(connectionId);
         return connection;
     }

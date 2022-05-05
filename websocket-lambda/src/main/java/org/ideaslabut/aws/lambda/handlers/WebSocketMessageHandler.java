@@ -6,14 +6,17 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import org.ideaslabut.aws.lambda.domain.websocket.ProxyRequestEvent;
 import org.ideaslabut.aws.lambda.domain.websocket.ProxyResponseEvent;
 import org.ideaslabut.aws.lambda.service.WebSocketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * AWS Lamba function request handler for handling webSocket request context route
+ * AWS Lambda function request handler for handling webSocket request context route
  *
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022
  */
 public class WebSocketMessageHandler implements RequestHandler<ProxyRequestEvent, ProxyResponseEvent> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketMessageHandler.class);
     /**
      * Handles input request for given
      *
@@ -23,6 +26,7 @@ public class WebSocketMessageHandler implements RequestHandler<ProxyRequestEvent
      */
     @Override
     public ProxyResponseEvent handleRequest(ProxyRequestEvent event, Context context) {
+        LOGGER.info("Processing websocket proxy event {}", event);
         var webSocketService = WebSocketService.getInstance();
         return webSocketService.processEvent(event);
     }

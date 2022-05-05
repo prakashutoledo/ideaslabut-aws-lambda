@@ -38,31 +38,4 @@ public class Response {
         sb.append('}');
         return sb.toString();
     }
-
-    /**
-     * Pojo holding webSocket connection details
-     *
-     * @author Prakash Khadka <br>
-     *         Created on: Jan 30, 2022
-     */
-    public static class IndexBody {
-        @JsonProperty("connectionId")
-        private String id;
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("{");
-            sb.append("connectionId='").append(id).append('\'');
-            sb.append('}');
-            return sb.toString();
-        }
-    }
 }

@@ -2,10 +2,11 @@ buildscript {
     ext {
         awsLambdaJavaCoreVersion = '1.2.1'
         awssdkBomVersion = '2.17.156'
+        awsLambdaJavaLog4j2Version='1.5.0'
         jacksonDatabindVersion = '2.13.2'
         junitBomVersion = '5.8.2'
         mockitoInlineVersion = '3.11.2'
-        slf4jSimpleVersion = '1.7.30'
+        log4jBomVersion = '2.17.2'
 
         dependencyManagementPluginVersion = '1.0.11.RELEASE'
         modulePluginVersion = '1.8.10'
@@ -13,12 +14,13 @@ buildscript {
 }
 
 plugins {
-    id 'java'
     id 'io.spring.dependency-management' version "${dependencyManagementPluginVersion}" apply false
     id 'org.javamodularity.moduleplugin' version "${modulePluginVersion}" apply false
 }
 
 allprojects {
+    apply plugin: 'java'
+
     group = 'org.ideaslabut'
     version = '1.0.0-SNAPSHOT'
     sourceCompatibility = '11'
@@ -26,7 +28,6 @@ allprojects {
 
 afterEvaluate {
     subprojects {
-        apply plugin: 'java'
         apply plugin: 'org.javamodularity.moduleplugin'
         apply plugin: 'io.spring.dependency-management'
 
@@ -38,18 +39,17 @@ afterEvaluate {
             dependencies {
                 dependency "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
                 dependency "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}"
-                dependency "org.slf4j:slf4j-simple:${slf4jSimpleVersion}"
+                dependency "com.amazonaws:aws-lambda-java-log4j2:${awsLambdaJavaLog4j2Version}"
             }
 
             imports {
                 mavenBom "software.amazon.awssdk:bom:${awssdkBomVersion}"
                 mavenBom "org.junit:junit-bom:${junitBomVersion}"
+                mavenBom "org.apache.logging.log4j:log4j-bom:${log4jBomVersion}"
             }
         }
 
         dependencies {
-            implementation 'software.amazon.awssdk:sdk-core'
-            implementation 'software.amazon.awssdk:apigatewaymanagementapi'
             testImplementation 'org.junit.jupiter:junit-jupiter'
             testImplementation "org.mockito:mockito-inline:${mockitoInlineVersion}"
         }

@@ -1,23 +1,33 @@
 package org.ideaslabut.aws.lambda.service;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.ideaslabut.aws.lambda.domain.elasticsearch.*;
-import org.ideaslabut.aws.lambda.domain.elasticsearch.request.*;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.Scroll;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.CreateRequest;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.DeleteRequest;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.Request;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.ScrollRequest;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Objects;
 import java.util.Optional;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.function.Consumer;
 
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-
 public class ElasticsearchService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchService.class);
+
     private static final String ELASTICSEARCH_URL = "elasticsearch.url";
     private static final String ELASTICSEARCH_AUTHENTICATION_KEY = "elasticsearch.authenticationKey";
     private static final String CONTENT_TYPE_JSON = "application/json";
@@ -56,6 +66,7 @@ public class ElasticsearchService {
     }
 
     public Optional<Response> search(SearchRequest searchRequest) {
+        LOGGER.info("Search elasticsearch for request {}", "test");
         if (searchRequest == null || searchRequest.getIndex() == null) {
             Optional.empty();
         }
@@ -74,22 +85,23 @@ public class ElasticsearchService {
         return send(httpRequest(HTTP_METHOD_GET, scroll, apiPath), scrollRequest);
     }
 
-    public Optional<Response> create(CreateRequest createRequest) {
-        if (createRequest == null || createRequest.getIndex() == null || createRequest.getBody() == null || createRequest.getBody().getId() == null) {
-            return Optional.empty();
-        }
-
+    public <T extends IndexBody> void create(CreateRequest<T> createRequest) {
+        checkRequest(createRequest);
         var apiPath = String.format("%s/_create/%s", createRequest.getIndex(), createRequest.getBody().getId());
-        return send(httpRequest(HTTP_METHOD_POST, createRequest.getBody(), apiPath), createRequest);
+        send(httpRequest(HTTP_METHOD_POST, createRequest.getBody(), apiPath), createRequest);
     }
 
-    public Optional<Response> delete(DeleteRequest deleteRequest) {
-        if (deleteRequest == null || deleteRequest.getIndex() == null || deleteRequest.getBody() == null || deleteRequest.getBody().getId() == null) {
-            return Optional.empty();
-        }
-
+    public <T extends IndexBody> void delete(DeleteRequest<T> deleteRequest) {
+        checkRequest(deleteRequest);
         var apiPath = String.format("%s/_doc/%s", deleteRequest.getIndex(), deleteRequest.getBody().getId());
-        return send(httpRequest(HTTP_METHOD_DELETE, null, apiPath), deleteRequest);
+        send(httpRequest(HTTP_METHOD_DELETE, null, apiPath), deleteRequest);
+    }
+
+
+    private void checkRequest(CreateRequest request) {
+        if (request == null || request.getIndex() == null || request.getBody() == null || request.getBody().getId() == null) {
+            throw new IllegalArgumentException("Invalid create request");
+        }
     }
 
     public void searchAll(SearchRequest searchRequest, Consumer<Response> responseConsumer, Consumer<Void> onComplete) {
@@ -172,15 +184,15 @@ public class ElasticsearchService {
     }
 
     private HttpRequest httpRequest(String method, String jsonBody, String apiPath) {
-        String url = applicationPropertiesService.getProperty(ELASTICSEARCH_URL);
+        var url = applicationPropertiesService.getProperty(ELASTICSEARCH_URL);
 
         if (apiPath != null && !apiPath.isEmpty()) {
             url = String.format("%s/%s", url, apiPath);
         }
 
-        HttpRequest.BodyPublisher bodyPublisher = Optional.ofNullable(jsonBody)
-                .map(body -> HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                .orElseGet(HttpRequest.BodyPublishers::noBody);
+        var bodyPublisher = Optional.ofNullable(jsonBody)
+                .map(BodyPublishers::ofString)
+                .orElseGet(BodyPublishers::noBody);
         return HttpRequest.newBuilder().method(method, bodyPublisher)
                 .uri(URI.create(url))
                 .setHeader("Authorization", String.format("Basic %s", applicationPropertiesService.getProperty(ELASTICSEARCH_AUTHENTICATION_KEY)))

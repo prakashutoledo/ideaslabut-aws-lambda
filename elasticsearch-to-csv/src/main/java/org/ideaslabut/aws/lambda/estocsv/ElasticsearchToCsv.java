@@ -3,8 +3,9 @@ package org.ideaslabut.aws.lambda.estocsv;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.SourceHits;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
-import org.ideaslabut.aws.lambda.extractor.util.CSVWriter;
 import org.ideaslabut.aws.lambda.service.ElasticsearchService;
+
+import org.ideaslabut.aws.lambda.extractor.util.CSVWriter;
 import org.ideaslabut.aws.lambda.extractor.util.ProgressBar;
 
 import java.io.IOException;
@@ -13,10 +14,8 @@ import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class Main {
-
+public class ElasticsearchToCsv {
     public static void main(String... main) throws Exception {
-        System.out.println("rere");
         long startTime = System.currentTimeMillis();
         var totalElementSearch =  SearchRequest.newBuilder().withSize(1).withIndex("socket").build();
         var totalElementSearchRequest = ElasticsearchService.getInstance().search(totalElementSearch);
