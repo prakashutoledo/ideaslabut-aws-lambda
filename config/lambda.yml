@@ -3,62 +3,36 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   ideaslabut-aws-lambda
 
-  Template for `ideaslabut-aws-lambda` which creates OpenSearch instance, Lambda function
-  and ApiGateway websocket api to invoke created lambda instance
+  Template for `ideaslabut-aws-lambda` which creates lambda function to invoke execute api for websocket connections
 
 Parameters:
-  MasterUserName:
+  OpenSearchUrl:
     Type: String
-    Description: (Required) The master username for OpenSearch instance
-
-  MasterPassword:
+    Description: (Required) The OpenSearch URL
+  BuildCodeUri:
     Type: String
-    Description: (Required) The msater password for OpenSearch Instance
-
-  DomainName:
+    Description: (Required) The code uri
+  FunctionName:
     Type: String
-    Default: 'ideaslabut-wearables'
-    Description: (Optional) Unique domain name of OpenSearch instance
+    Description: (Optional) The name of the lambda function
+    Default: 'ideaslabut-websocket-lambda'
 
 Resources:
-  WearablesOpenSearchInstance:
-    Type: AWS::OpenSearchService::Domain
-    Properties:
-      DomainName: !Ref DomainName
-      NodeToNodeEncryptionOptions:
-        Enabled : true
-      DomainEndpointOptions:
-        EnforceHTTPS: true
-      AdvancedSecurityOptions:
-        Enabled: true
-        InternalUserDatabaseEnabled: true
-        MasterUserOptions:
-          MasterUserName: !Ref MasterUserName
-          MasterUserPassword: !Ref MasterPassword
-      ClusterConfig:
-        InstanceCount: '1'
-        DedicatedMasterEnabled: false
-        InstanceType: t3.small.search
-      EBSOptions:
-        EBSEnabled: true
-        Iops: '0'
-        VolumeSize: '10'
-        VolumeType: 'gp2'
-      EncryptionAtRestOptions:
-        Enabled: true
-      AdvancedOptions:
-        rest.action.multi.allow_explicit_index: true
-        override_main_response_version: true
-      AccessPolicies:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS: '*'
-            Action:
-              - 'es:*'
-            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${DomainName}/*'
-
-Outputs:
-  DomainEndpoint:
-    Value: !sub 'https://${WearablesOpenSearchInstance.DomainEndpoint}'
+  WebSocketLambdaFunction:
+    properties:
+      FunctionName: !Ref functionName
+      Architectures:
+        - 'x86_64'
+      Handler: 'org.ideaslabut.aws.lambda.handlers.WebSocketMessageHandler'
+      Environment:
+        elasticsearch.url: !Ref OpenSearchUrl
+      CodeUri: !Sub '../websocket-lambda/build/libs/${BuildCodeUri}'
+      MemorySize: 256
+      Runtime: java11
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - 'execute-api:ManageConnections'
+              Resource:
+                - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/*'

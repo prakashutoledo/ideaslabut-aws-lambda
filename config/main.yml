@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ideaslabut-aws-lambda
+  Template for `ideaslabut-aws-lambda` which creates lambda function to invoke execute api for websocket connections
+
+Parameters:
+  MasterUserName:
+    Type: String
+    Description: (Required) The master username for OpenSearch instance
+  MasterPassword:
+    Type: String
+    Description: (Required) The msater password for OpenSearch Instance
+  BuildCodeUri:
+    Type: String
+    Description: (Required) The code uri
+
+Resources:
+  WearablesOpenSearchStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: opensearch.yml
+      Parameters:
+        MasterUserName: !Ref MasterUserName
+        MasterPassword: !Ref MasterPassword
+        BuildCodeUri: !Ref BuildCodeUri
+
+  WearablesLambdaStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: lambda.yml
+      Parameters:
+        OpenSearchUrl: !GetAtt WearablesOpenSearchStack.Outputs.DomainEndpoint

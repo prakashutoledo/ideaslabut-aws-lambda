@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ideaslabut-aws-lambda
+
+  Template for `ideaslabut-aws-lambda` which creates OpenSearch instance
+
+Parameters:
+  MasterUserName:
+    Type: String
+    Description: (Required) The master username for OpenSearch instance
+
+  MasterPassword:
+    Type: String
+    Description: (Required) The msater password for OpenSearch Instance
+
+  DomainName:
+    Type: String
+    Default: 'ideaslabut-wearables'
+    Description: (Optional) Unique domain name of OpenSearch instance
+
+Resources:
+  WearablesOpenSearchInstance:
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: !Ref DomainName
+      NodeToNodeEncryptionOptions:
+        Enabled : true
+      DomainEndpointOptions:
+        EnforceHTTPS: true
+      AdvancedSecurityOptions:
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions:
+          MasterUserName: !Ref MasterUserName
+          MasterUserPassword: !Ref MasterPassword
+      ClusterConfig:
+        InstanceCount: '1'
+        DedicatedMasterEnabled: false
+        InstanceType: t3.small.search
+      EBSOptions:
+        EBSEnabled: true
+        Iops: '0'
+        VolumeSize: '10'
+        VolumeType: 'gp2'
+      EncryptionAtRestOptions:
+        Enabled: true
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: true
+        override_main_response_version: true
+      AccessPolicies:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+              - 'es:*'
+            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${DomainName}/*'
+
+Outputs:
+  DomainEndpoint:
+    Value: !sub 'https://${WearablesOpenSearchInstance.DomainEndpoint}'
