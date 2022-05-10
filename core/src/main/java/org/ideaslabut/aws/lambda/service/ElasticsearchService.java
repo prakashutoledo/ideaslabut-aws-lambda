@@ -28,8 +28,8 @@ import java.util.function.Consumer;
 public class ElasticsearchService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchService.class);
 
-    private static final String ELASTICSEARCH_URL = "elasticsearch.url";
-    private static final String ELASTICSEARCH_AUTHENTICATION_KEY = "elasticsearch.authenticationKey";
+    private static final String ELASTICSEARCH_URL = "ELASTICSEARCH_URL";
+    private static final String ELASTICSEARCH_AUTHENTICATION_KEY = "ELASTICSEARCH_AUTHENTICATION_KEY";
     private static final String CONTENT_TYPE_JSON = "application/json";
 
     private static final String HTTP_METHOD_GET = "GET";
@@ -38,7 +38,6 @@ public class ElasticsearchService {
 
     private static ElasticsearchService INSTANCE = null;
     private final HttpClient httpClient;
-    private final ApplicationPropertiesService applicationPropertiesService;
     private final ObjectMapper objectMapper;
 
     public static ElasticsearchService getInstance() {
@@ -54,21 +53,19 @@ public class ElasticsearchService {
 
     private static ElasticsearchService buildInstance() {
         var httpClient = HttpClient.newHttpClient();
-        var applicationPropertiesService = ApplicationPropertiesService.getInstance();
         var objectMapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return new ElasticsearchService(httpClient, applicationPropertiesService, objectMapper);
+        return new ElasticsearchService(httpClient, objectMapper);
     }
 
-    private ElasticsearchService(HttpClient httpClient, ApplicationPropertiesService applicationPropertiesService, ObjectMapper objectMapper) {
+    private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = Objects.requireNonNull(httpClient);
-        this.applicationPropertiesService = applicationPropertiesService;
         this.objectMapper = objectMapper;
     }
 
     public Optional<Response> search(SearchRequest searchRequest) {
         LOGGER.info("Search elasticsearch for request {}", searchRequest);
         if (searchRequest == null || searchRequest.getIndex() == null) {
-            Optional.empty();
+            return Optional.empty();
         }
         String apiPath = String.format("%s/_search?size=%d&scroll=%s", searchRequest.getIndex(), searchRequest.getSize(), searchRequest.getScroll());
         return send(httpRequest(HTTP_METHOD_GET, null, apiPath), searchRequest);
@@ -184,18 +181,20 @@ public class ElasticsearchService {
     }
 
     private HttpRequest httpRequest(String method, String jsonBody, String apiPath) {
-        var url = applicationPropertiesService.getProperty(ELASTICSEARCH_URL);
+        var url = System.getenv(ELASTICSEARCH_URL);
 
         if (apiPath != null && !apiPath.isEmpty()) {
             url = String.format("%s/%s", url, apiPath);
         }
+
+        LOGGER.info("Url {}", url);
 
         var bodyPublisher = Optional.ofNullable(jsonBody)
                 .map(BodyPublishers::ofString)
                 .orElseGet(BodyPublishers::noBody);
         return HttpRequest.newBuilder().method(method, bodyPublisher)
                 .uri(URI.create(url))
-                .setHeader("Authorization", String.format("Basic %s", applicationPropertiesService.getProperty(ELASTICSEARCH_AUTHENTICATION_KEY)))
+                .setHeader("Authorization", String.format("Basic %s", System.getenv(ELASTICSEARCH_AUTHENTICATION_KEY)))
                 .setHeader("Content-Type", CONTENT_TYPE_JSON)
                 .build();
     }

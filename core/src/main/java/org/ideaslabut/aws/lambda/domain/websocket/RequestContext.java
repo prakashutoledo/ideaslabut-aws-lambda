@@ -14,6 +14,8 @@ public class RequestContext {
     private String routeKey;
     private String domainName;
 
+    private String stage;
+
     public String getConnectionId() {
         return connectionId;
     }
@@ -36,6 +38,14 @@ public class RequestContext {
 
     public void setDomainName(String domainName) {
         this.domainName = domainName;
+    }
+
+    public String getStage() {
+        return stage;
+    }
+
+    public void setStage(String stage) {
+        this.stage = stage;
     }
 
     @Override

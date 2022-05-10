@@ -8,12 +8,9 @@ Parameters:
   MasterUserName:
     Type: String
     Description: (Required) The master username for OpenSearch instance
-  MasterPassword:
+  MasterUserPassword:
     Type: String
     Description: (Required) The msater password for OpenSearch Instance
-  BuildCodeUri:
-    Type: String
-    Description: (Required) The code uri
 
 Resources:
   WearablesOpenSearchStack:
@@ -22,12 +19,21 @@ Resources:
       TemplateURL: opensearch.yml
       Parameters:
         MasterUserName: !Ref MasterUserName
-        MasterPassword: !Ref MasterPassword
-        BuildCodeUri: !Ref BuildCodeUri
+        MasterUserPassword: !Ref MasterUserPassword
 
   WearablesLambdaStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: lambda.yml
       Parameters:
+        MasterUserName: !Ref MasterUserName
+        MasterUserPassword: !Ref MasterUserPassword
         OpenSearchUrl: !GetAtt WearablesOpenSearchStack.Outputs.DomainEndpoint
+
+  WearablesWebSocketApiGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: apigateway-websocket.yml
+      Parameters:
+        WebSocketLambdaFunctionName: !GetAtt WearablesLambdaStack.Outputs.WebSocketLambdaFunctionName
+        WebSocketLambdaFunctionArn: !GetAtt WearablesLambdaStack.Outputs.WebSocketLambdaFunctionArn

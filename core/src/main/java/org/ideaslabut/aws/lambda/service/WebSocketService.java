@@ -11,6 +11,8 @@ import org.ideaslabut.aws.lambda.domain.websocket.ProxyRequestEvent;
 import org.ideaslabut.aws.lambda.domain.websocket.ProxyResponseEvent;
 import org.ideaslabut.aws.lambda.domain.websocket.RouteKey;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
@@ -30,6 +32,8 @@ import java.util.function.Consumer;
  * Created on: Jan 30, 2022
  */
 public class WebSocketService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
+
     private static final int HTTP_OK_STATUS_CODE = 200;
     private static final int HTTP_BAD_RESPONSE_STATUS_CODE = 400;
     private static final int HTTP_PARTIAL_CONTENT_STATUS_CODE = 206;
@@ -134,7 +138,10 @@ public class WebSocketService {
      */
     private ProxyResponseEvent removeConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
+        Consumer<HttpResponse<String>> responseConsumer = httpResponse ->  {
+            LOGGER.info("Create response {} with status {}", httpResponse.body(), httpResponse.statusCode());
+            statusCode.set(httpResponse.statusCode());
+        };
 
         elasticsearchService.delete(DeleteRequest
                 .newDeleteBuilder(IndexBody.class)
@@ -193,6 +200,7 @@ public class WebSocketService {
                 .build();
         try {
             apiGatewayManagementClient.postToConnection(connectionRequest);
+
         } catch (Exception ignored) {
             return false;
         }

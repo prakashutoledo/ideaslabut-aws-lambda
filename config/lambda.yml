@@ -9,30 +9,39 @@ Parameters:
   OpenSearchUrl:
     Type: String
     Description: (Required) The OpenSearch URL
-  BuildCodeUri:
-    Type: String
-    Description: (Required) The code uri
   FunctionName:
     Type: String
     Description: (Optional) The name of the lambda function
     Default: 'ideaslabut-websocket-lambda'
+  MasterUserName:
+    Type: String
+    Description: (Required) Master user name for open search
+  MasterUserPassword:
+    Type: String
+    Description: (Required) Master password for elasticsearch
 
 Resources:
   WebSocketLambdaFunction:
-    properties:
-      FunctionName: !Ref functionName
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../websocket-lambda/build/libs/websocket-lambda-1.0.0-SNAPSHOT.zip
+      FunctionName: !Ref FunctionName
       Architectures:
-        - 'x86_64'
-      Handler: 'org.ideaslabut.aws.lambda.handlers.WebSocketMessageHandler'
+        - x86_64
+      Handler: org.ideaslabut.aws.lambda.handlers.WebSocketMessageHandler
       Environment:
-        elasticsearch.url: !Ref OpenSearchUrl
-      CodeUri: !Sub '../websocket-lambda/build/libs/${BuildCodeUri}'
+        Variables:
+          ELASTICSEARCH_URL: !Ref OpenSearchUrl
+          ELASTICSEARCH_AUTHENTICATION_KEY:
+                                Fn::Base64: !Sub ${MasterUserName}:${MasterUserPassword}
       MemorySize: 256
       Runtime: java11
       Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - 'execute-api:ManageConnections'
-              Resource:
-                - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/*'
+        - AWSLambdaBasicExecutionRole
+        - AmazonAPIGatewayInvokeFullAccess
+
+Outputs:
+  WebSocketLambdaFunctionName:
+    Value: !Ref WebSocketLambdaFunction
+  WebSocketLambdaFunctionArn:
+    Value: !GetAtt WebSocketLambdaFunction.Arn

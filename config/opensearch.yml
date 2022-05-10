@@ -10,7 +10,7 @@ Parameters:
     Type: String
     Description: (Required) The master username for OpenSearch instance
 
-  MasterPassword:
+  MasterUserPassword:
     Type: String
     Description: (Required) The msater password for OpenSearch Instance
 
@@ -33,7 +33,7 @@ Resources:
         InternalUserDatabaseEnabled: true
         MasterUserOptions:
           MasterUserName: !Ref MasterUserName
-          MasterUserPassword: !Ref MasterPassword
+          MasterUserPassword: !Ref MasterUserPassword
       ClusterConfig:
         InstanceCount: '1'
         DedicatedMasterEnabled: false
@@ -60,4 +60,4 @@ Resources:
 
 Outputs:
   DomainEndpoint:
-    Value: !sub 'https://${WearablesOpenSearchInstance.DomainEndpoint}'
+    Value: !Sub 'https://${WearablesOpenSearchInstance.DomainEndpoint}'

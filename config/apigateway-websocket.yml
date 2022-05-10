@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ideaslabut-aws-lambda
+  Template for `ideaslabut-aws-lambda` which creates web socket api to invoke lambda function
+
+Parameters:
+  WebSocketLambdaFunctionName:
+    Type: String
+  WebSocketLambdaFunctionArn:
+    Type: String
+    Description: (Required) The Arn for the lambda to invoke on webSocket request
+
+Resources:
+  WearablesWebSocket:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: WearablesWebSocket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: '$request.body.action'
+
+  OnConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      RouteKey: $connect
+      AuthorizationType: NONE
+      OperationName: OnConnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref OnConnectIntegration
+
+  OnConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      Description: On Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+
+  OnDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: DisconnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref OnDisconnectIntegration
+
+  OnDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      RouteKey: $default
+      AuthorizationType: NONE
+      OperationName: OnConnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref OnConnectIntegration
+
+  DefaultIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      Description: Default Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+
+  SendMessageRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      RouteKey: sendMessage
+      AuthorizationType: NONE
+      OperationName: SendMessageRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref SendMessageIntegration
+
+  SendMessageIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+      Description: Send Message Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - OnConnectRoute
+      - SendMessageRoute
+      - OnDisconnectRoute
+      - DefaultRoute
+    Properties:
+      ApiId: !Ref WearablesWebSocket
+
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: production
+      Description: Prod Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref WearablesWebSocket
+
+  LamdaPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - WearablesWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketLambdaFunctionName
+      Principal: apigateway.amazonaws.com
