@@ -17,6 +17,11 @@ import org.slf4j.LoggerFactory;
  */
 public class WebSocketMessageHandler implements RequestHandler<ProxyRequestEvent, ProxyResponseEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketMessageHandler.class);
+    private WebSocketService webSocketService;
+
+    public WebSocketMessageHandler() {
+        webSocketService = WebSocketService.getInstance();
+    }
     /**
      * Handles input request for given
      *
@@ -27,7 +32,6 @@ public class WebSocketMessageHandler implements RequestHandler<ProxyRequestEvent
     @Override
     public ProxyResponseEvent handleRequest(ProxyRequestEvent event, Context context) {
         LOGGER.info("Processing websocket proxy event {}", event);
-        var webSocketService = WebSocketService.getInstance();
         return webSocketService.processEvent(event);
     }
 }

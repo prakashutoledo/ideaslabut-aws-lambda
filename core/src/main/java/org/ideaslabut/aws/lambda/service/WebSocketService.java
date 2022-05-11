@@ -14,6 +14,7 @@ import org.ideaslabut.aws.lambda.domain.websocket.RouteKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
 
@@ -37,7 +38,7 @@ public class WebSocketService {
     private static final int HTTP_OK_STATUS_CODE = 200;
     private static final int HTTP_BAD_RESPONSE_STATUS_CODE = 400;
     private static final int HTTP_PARTIAL_CONTENT_STATUS_CODE = 206;
-    private static final String WEBSOCKET_MANAGEMENT_URL = "websocket.management.url";
+    private static final String WEBSOCKET_MANAGEMENT_URL = "WEBSOCKET_MANAGEMENT_URL";
     private static final String WEB_SOCKET_INDEX_NAME = "socket";
 
     private static WebSocketService INSTANCE = null;
@@ -61,7 +62,8 @@ public class WebSocketService {
     private static WebSocketService buildInstance() {
         var apiGatewayManagementClient = ApiGatewayManagementApiClient.builder()
                 .region(US_EAST_2)
-                .endpointOverride(URI.create(ApplicationPropertiesService.getInstance().getProperty(WEBSOCKET_MANAGEMENT_URL)))
+                .httpClientBuilder(UrlConnectionHttpClient.builder())
+                .endpointOverride(URI.create(System.getenv(WEBSOCKET_MANAGEMENT_URL)))
                 .build();
         return new WebSocketService(apiGatewayManagementClient, ElasticsearchService.getInstance());
     }
@@ -117,7 +119,10 @@ public class WebSocketService {
      */
     private ProxyResponseEvent addConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
+        Consumer<HttpResponse<String>> responseConsumer = httpResponse ->  {
+            LOGGER.info("Create response {} with status {}", httpResponse.body(), httpResponse.statusCode());
+            statusCode.set(httpResponse.statusCode());
+        };
 
         elasticsearchService.create(CreateRequest
                 .newCreateBuilder()

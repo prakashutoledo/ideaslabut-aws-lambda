@@ -8,7 +8,7 @@ buildscript {
         junitBomVersion = '5.8.2'
         mockitoInlineVersion = '3.11.2'
         log4jBomVersion = '2.17.2'
-
+        slf4jNopVersion = '1.7.30'
         dependencyManagementPluginVersion = '1.0.11.RELEASE'
         modulePluginVersion = '1.8.10'
     }
@@ -42,6 +42,7 @@ afterEvaluate {
                 dependency "com.amazonaws:aws-lambda-java-core:${awsLambdaJavaCoreVersion}"
                 dependency "com.amazonaws:aws-lambda-java-log4j2:${awsLambdaJavaLog4j2Version}"
                 dependency "org.apache.commons:commons-lang3:${commonsLang3Version}"
+                dependency "org.slf4j:slf4j-nop:${slf4jNopVersion}"
             }
 
             imports {

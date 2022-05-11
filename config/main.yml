@@ -11,6 +11,9 @@ Parameters:
   MasterUserPassword:
     Type: String
     Description: (Required) The msater password for OpenSearch Instance
+  FunctionName:
+    Type: String
+    Description: (Required) The name of the lambda function
 
 Resources:
   WearablesOpenSearchStack:
@@ -21,6 +24,13 @@ Resources:
         MasterUserName: !Ref MasterUserName
         MasterUserPassword: !Ref MasterUserPassword
 
+  WearablesWebSocketApiGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: apigateway-websocket.yml
+      Parameters:
+        WebSocketLambdaFunctionName: !Ref FunctionName
+
   WearablesLambdaStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -28,12 +38,14 @@ Resources:
       Parameters:
         MasterUserName: !Ref MasterUserName
         MasterUserPassword: !Ref MasterUserPassword
+        FunctionName: !Ref FunctionName
+        WebSocketManagementUrl: !GetAtt WearablesWebSocketApiGatewayStack.Outputs.WearablesWebSocketManagementUrl
         OpenSearchUrl: !GetAtt WearablesOpenSearchStack.Outputs.DomainEndpoint
 
-  WearablesWebSocketApiGatewayStack:
-    Type: AWS::CloudFormation::Stack
+  LamdaPermission:
+    Type: AWS::Lambda::Permission
     Properties:
-      TemplateURL: apigateway-websocket.yml
-      Parameters:
-        WebSocketLambdaFunctionName: !GetAtt WearablesLambdaStack.Outputs.WebSocketLambdaFunctionName
-        WebSocketLambdaFunctionArn: !GetAtt WearablesLambdaStack.Outputs.WebSocketLambdaFunctionArn
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt WearablesLambdaStack.Outputs.WebSocketLambdaFunctionArn
+      Principal: apigateway.amazonaws.com
+

@@ -8,6 +8,7 @@ module ideaslabut.aws.lambda.core {
     requires software.amazon.awssdk.core;
     requires software.amazon.awssdk.services.apigatewaymanagementapi;
     requires software.amazon.awssdk.regions;
+    requires software.amazon.awssdk.http.urlconnection;
 
     exports org.ideaslabut.aws.lambda.domain.elasticsearch;
     exports org.ideaslabut.aws.lambda.domain.elasticsearch.request;

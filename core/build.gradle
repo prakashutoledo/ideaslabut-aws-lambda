@@ -2,10 +2,15 @@ apply plugin: 'java-library'
 
 dependencies {
     api 'software.amazon.awssdk:sdk-core'
-    api 'software.amazon.awssdk:apigatewaymanagementapi'
+    api 'software.amazon.awssdk:url-connection-client'
+    // We will be using HttpUrlConnection instead of Apache or Netty client
+    // This will significantly decrease the size of lambda zip
+    api ('software.amazon.awssdk:apigatewaymanagementapi') {
+        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+        exclude group: 'software.amazon.awssdk', module: 'apache-client'
+    }
     api 'com.fasterxml.jackson.core:jackson-databind'
     api 'org.apache.commons:commons-lang3'
-
     api 'org.slf4j:slf4j-api'
 }
 

@@ -9,10 +9,12 @@ Parameters:
   OpenSearchUrl:
     Type: String
     Description: (Required) The OpenSearch URL
+  WebSocketManagementUrl:
+    Type: String
+    Description: (Required) The OpenSearch URL
   FunctionName:
     Type: String
-    Description: (Optional) The name of the lambda function
-    Default: 'ideaslabut-websocket-lambda'
+    Description: (Required) The name of the lambda function
   MasterUserName:
     Type: String
     Description: (Required) Master user name for open search
@@ -31,10 +33,13 @@ Resources:
       Handler: org.ideaslabut.aws.lambda.handlers.WebSocketMessageHandler
       Environment:
         Variables:
+          JAVA_TOOL_OPTIONS: '-XX:+TieredCompilation -XX:TieredStopAtLevel=1'
+          WEBSOCKET_MANAGEMENT_URL: !Ref WebSocketManagementUrl
           ELASTICSEARCH_URL: !Ref OpenSearchUrl
           ELASTICSEARCH_AUTHENTICATION_KEY:
                                 Fn::Base64: !Sub ${MasterUserName}:${MasterUserPassword}
-      MemorySize: 256
+      MemorySize: 500
+      Timeout: 10
       Runtime: java11
       Policies:
         - AWSLambdaBasicExecutionRole

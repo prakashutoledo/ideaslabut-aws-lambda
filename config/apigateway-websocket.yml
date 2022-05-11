@@ -7,9 +7,6 @@ Description: >
 Parameters:
   WebSocketLambdaFunctionName:
     Type: String
-  WebSocketLambdaFunctionArn:
-    Type: String
-    Description: (Required) The Arn for the lambda to invoke on webSocket request
 
 Resources:
   WearablesWebSocket:
@@ -37,7 +34,7 @@ Resources:
       ApiId: !Ref WearablesWebSocket
       Description: On Connect Integration
       IntegrationType: AWS_PROXY
-      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${WebSocketLambdaFunctionName}/invocations
 
   OnDisconnectRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -57,7 +54,7 @@ Resources:
       ApiId: !Ref WearablesWebSocket
       Description: Disconnect Integration
       IntegrationType: AWS_PROXY
-      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${WebSocketLambdaFunctionName}/invocations
 
   DefaultRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -77,7 +74,7 @@ Resources:
       ApiId: !Ref WearablesWebSocket
       Description: Default Integration
       IntegrationType: AWS_PROXY
-      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${WebSocketLambdaFunctionName}/invocations
 
   SendMessageRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -97,7 +94,7 @@ Resources:
       ApiId: !Ref WearablesWebSocket
       Description: Send Message Integration
       IntegrationType: AWS_PROXY
-      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLambdaFunctionArn}/invocations
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${WebSocketLambdaFunctionName}/invocations
 
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
@@ -117,11 +114,8 @@ Resources:
       DeploymentId: !Ref Deployment
       ApiId: !Ref WearablesWebSocket
 
-  LamdaPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - WearablesWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref WebSocketLambdaFunctionName
-      Principal: apigateway.amazonaws.com
+Outputs:
+  WearablesWebSocketUrl:
+    Value: !Sub wss://${WearablesWebSocket}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+  WearablesWebSocketManagementUrl:
+    Value: !Sub https://${WearablesWebSocket}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
