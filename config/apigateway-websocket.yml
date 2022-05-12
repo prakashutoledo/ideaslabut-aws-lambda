@@ -12,9 +12,9 @@ Resources:
   WearablesWebSocket:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: WearablesWebSocket
+      Name: ideaslabut-wearables-websocket
       ProtocolType: WEBSOCKET
-      RouteSelectionExpression: '$request.body.action'
+      RouteSelectionExpression: $request.body.action
 
   OnConnectRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -23,10 +23,7 @@ Resources:
       RouteKey: $connect
       AuthorizationType: NONE
       OperationName: OnConnectRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref OnConnectIntegration
+      Target: !Sub integrations/${OnConnectIntegration}
 
   OnConnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -43,10 +40,7 @@ Resources:
       RouteKey: $disconnect
       AuthorizationType: NONE
       OperationName: DisconnectRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref OnDisconnectIntegration
+      Target: !Sub integrations/${OnDisconnectIntegration}
 
   OnDisconnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -62,12 +56,9 @@ Resources:
       ApiId: !Ref WearablesWebSocket
       RouteKey: $default
       AuthorizationType: NONE
-      OperationName: OnConnectRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref OnConnectIntegration
-
+      OperationName: DefaultRoute
+      Target: !Sub integrations/${DefaultIntegration}
+      
   DefaultIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -83,10 +74,7 @@ Resources:
       RouteKey: sendMessage
       AuthorizationType: NONE
       OperationName: SendMessageRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref SendMessageIntegration
+      Target: !Sub integrations/${SendMessageIntegration}
 
   SendMessageIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -96,7 +84,7 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${WebSocketLambdaFunctionName}/invocations
 
-  Deployment:
+  WearablesWebSocketDeployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
       - OnConnectRoute
@@ -106,12 +94,12 @@ Resources:
     Properties:
       ApiId: !Ref WearablesWebSocket
 
-  Stage:
+  WearablesWebSocketDeploymentStage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       StageName: production
-      Description: Prod Stage
-      DeploymentId: !Ref Deployment
+      Description: Production Stage
+      DeploymentId: !Ref WearablesWebSocketDeployment
       ApiId: !Ref WearablesWebSocket
 
 Outputs:

@@ -60,4 +60,4 @@ Resources:
 
 Outputs:
   DomainEndpoint:
-    Value: !Sub 'https://${WearablesOpenSearchInstance.DomainEndpoint}'
+    Value: !Sub https://${WearablesOpenSearchInstance.DomainEndpoint}
