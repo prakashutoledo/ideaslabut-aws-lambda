@@ -19,7 +19,7 @@ public class ScrollRequest extends Scrollable {
         }
     }
 
-    public static Builder newBuilder() {
+    public static Builder builder() {
         return new Builder();
     }
 

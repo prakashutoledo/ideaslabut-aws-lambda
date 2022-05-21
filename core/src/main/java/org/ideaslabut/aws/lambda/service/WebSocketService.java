@@ -42,6 +42,13 @@ public class WebSocketService {
     private static final String WEB_SOCKET_INDEX_NAME = "socket";
 
     private static WebSocketService INSTANCE = null;
+    private final ApiGatewayManagementApiClient apiGatewayManagementClient;
+    private final ElasticsearchService elasticsearchService;
+
+    private WebSocketService(ApiGatewayManagementApiClient apiGatewayManagementClient, ElasticsearchService elasticsearchService) {
+        this.elasticsearchService = elasticsearchService;
+        this.apiGatewayManagementClient = apiGatewayManagementClient;
+    }
 
     /**
      * A threadsafe singleton instance for WebSocketService
@@ -68,22 +75,16 @@ public class WebSocketService {
         return new WebSocketService(apiGatewayManagementClient, ElasticsearchService.getInstance());
     }
 
-    private final ApiGatewayManagementApiClient apiGatewayManagementClient;
-    private final ElasticsearchService elasticsearchService;
-
-    private WebSocketService(ApiGatewayManagementApiClient apiGatewayManagementClient, ElasticsearchService elasticsearchService) {
-        this.elasticsearchService = elasticsearchService;
-        this.apiGatewayManagementClient = apiGatewayManagementClient;
-    }
-
     /**
      * Process the given websocket proxy event by parsing defined routeKey. Default route key $connect and $disconnect
      * will do nothing but setting the connection and disconnecting. RouteKey <code>sendMessage</code> will send the
      * given payload body message to all available connection
      *
      * @param proxyRequestEvent a websocket proxy event to process
+     *
      * @return an api gateway response event with proper status code and empty body
      * For null events and requestContext a status code of 400 will be returned otherwise returns 200
+     *
      * @throws IllegalStateException if no route key are matched, api gateway default route key is considered
      *                               as unmatched
      */
@@ -115,17 +116,18 @@ public class WebSocketService {
      * Adds the given connection id to the connected webSocket connection set
      *
      * @param connectionId a connection id to be removed
+     *
      * @return an api gateway response event with status code 200
      */
     private ProxyResponseEvent addConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse ->  {
+        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> {
             LOGGER.info("Create response {} with status {}", httpResponse.body(), httpResponse.statusCode());
             statusCode.set(httpResponse.statusCode());
         };
 
         elasticsearchService.create(CreateRequest
-                .newCreateBuilder()
+                .builder()
                 .withIndex(WEB_SOCKET_INDEX_NAME)
                 .withBody(connection(connectionId))
                 .onHttpSuccess(responseConsumer)
@@ -139,17 +141,18 @@ public class WebSocketService {
      * Remove the given connection id from the connected webSocket connection set
      *
      * @param connectionId a connection id to be removed
+     *
      * @return an api gateway response event with status code 200
      */
     private ProxyResponseEvent removeConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse ->  {
+        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> {
             LOGGER.info("Create response {} with status {}", httpResponse.body(), httpResponse.statusCode());
             statusCode.set(httpResponse.statusCode());
         };
 
         elasticsearchService.delete(DeleteRequest
-                .newDeleteBuilder(IndexBody.class)
+                .builder()
                 .withBody(connection(connectionId))
                 .onHttpError(responseConsumer)
                 .onHttpSuccess(responseConsumer)
@@ -165,6 +168,7 @@ public class WebSocketService {
      *
      * @param senderConnectionId a connection id of the sender to be filtered out
      * @param body               a message body to be sent to all available connection
+     *
      * @return an api gateway response event with status code 200 if successful
      */
     private ProxyResponseEvent sendWebSocketMessage(String senderConnectionId, final Object body) {
@@ -183,7 +187,7 @@ public class WebSocketService {
             statusList.add(status);
         };
 
-        elasticsearchService.searchAll(SearchRequest.newBuilder().withSize(10).withIndex(WEB_SOCKET_INDEX_NAME).withScroll("1m").build(), responseConsumer, null);
+        elasticsearchService.searchAll(SearchRequest.builder().withSize(10).withIndex(WEB_SOCKET_INDEX_NAME).withScroll("1m").build(), responseConsumer, null);
         return responseEvent(statusList.stream().anyMatch(value -> !value) ? HTTP_PARTIAL_CONTENT_STATUS_CODE : HTTP_OK_STATUS_CODE);
     }
 
@@ -192,6 +196,7 @@ public class WebSocketService {
      *
      * @param toConnectionId a webSocket connection to send given message body
      * @param body           a message body to be sent to given connection id
+     *
      * @return <code>true</code> if successful otherwise <code>false</code>
      */
     private boolean sendMessage(String toConnectionId, String fromConnectionId, Object body) {
@@ -217,6 +222,7 @@ public class WebSocketService {
      * so that as per api gateway rule so that response body is parsed properly
      *
      * @param statusCode a status code to write to response
+     *
      * @return a api gateway response event with given status code and empty body
      */
     private ProxyResponseEvent responseEvent(int statusCode) {

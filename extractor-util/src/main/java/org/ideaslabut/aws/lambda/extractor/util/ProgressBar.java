@@ -52,10 +52,10 @@ public class ProgressBar {
         return new Builder();
     }
 
-    private int maxStep;
+    private final int maxStep;
     private long totalElement;
-    private String delimiter;
-    private PrintStream printStream;
+    private final String delimiter;
+    private final PrintStream printStream;
     private final String format;
     private final StringBuilder delimiterBuilder;
     private long startTime;
@@ -66,8 +66,6 @@ public class ProgressBar {
     }
 
     private ProgressBar(int maxStep, long totalElement, String delimiter, PrintStream printStream, String prefix) {
-        this.maxStep = maxStep;
-        this.totalElement = totalElement;
         this.delimiter = delimiter;
         this.printStream = Objects.requireNonNull(printStream, "Print stream should not be null");
         this.maxStep = validateMaxStep(maxStep);

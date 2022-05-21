@@ -1,54 +1,27 @@
 package org.ideaslabut.aws.lambda.extractor.util;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.Objects.requireNonNull;
+
 import java.io.BufferedWriter;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CSVWriter implements AutoCloseable, Flushable {
     private static final char UTF8_BOM = '\ufeff';
     private static final String DEFAULT_WRITER_DIRECTORY = "build/elasticsearch";
     private static final String CSV_EXTENSION = ".csv";
-
-    public static class Builder {
-        private String fileName;
-        private String delimiter;
-
-        private Builder() {
-            this.delimiter = ",";
-            this.fileName = "temp";
-        }
-
-        public Builder withFileName(String fileName) {
-            this.fileName = fileName;
-            return this;
-        }
-
-        public Builder withDelimiter(String delimiter) {
-            this.delimiter = delimiter;
-            return this;
-        }
-
-        public CSVWriter build() {
-            CSVWriter csvWriterService = new CSVWriter(delimiter);
-            csvWriterService.open(fileName);
-            return csvWriterService;
-        }
-    }
-
-    public static Builder newBuilder() {
-        return new Builder();
-    }
 
     private final String delimiter;
     private BufferedWriter printWriter;
@@ -59,14 +32,14 @@ public class CSVWriter implements AutoCloseable, Flushable {
         this.headers = new HashSet<>();
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     private void open(String fileName) {
         try {
             Files.createDirectories(Path.of(DEFAULT_WRITER_DIRECTORY));
-            printWriter = Files.newBufferedWriter(Path.of(String.format("%s/%s.%s",
-                    DEFAULT_WRITER_DIRECTORY,
-                    Objects.requireNonNull(fileName), CSV_EXTENSION)),
-                    StandardCharsets.UTF_8, StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+            printWriter = Files.newBufferedWriter(Path.of(String.format("%s/%s.%s", DEFAULT_WRITER_DIRECTORY, requireNonNull(fileName), CSV_EXTENSION)), UTF_8, CREATE, TRUNCATE_EXISTING, WRITE);
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
@@ -94,7 +67,9 @@ public class CSVWriter implements AutoCloseable, Flushable {
             writeHeaders(firstProperty.keySet());
         }
 
-        properties.stream().map(map -> headers.stream().map(map::get).collect(Collectors.joining(delimiter))).forEach(this::writeLine);
+        properties.stream()
+                .map(map -> headers.stream().map(map::get).collect(Collectors.joining(delimiter)))
+                .forEach(this::writeLine);
     }
 
     private void writeHeaders() {
@@ -122,5 +97,31 @@ public class CSVWriter implements AutoCloseable, Flushable {
     @Override
     public void close() throws IOException {
         printWriter.close();
+    }
+
+    public static class Builder {
+        private String fileName;
+        private String delimiter;
+
+        private Builder() {
+            this.delimiter = ",";
+            this.fileName = "temp";
+        }
+
+        public Builder withFileName(String fileName) {
+            this.fileName = fileName;
+            return this;
+        }
+
+        public Builder withDelimiter(String delimiter) {
+            this.delimiter = delimiter;
+            return this;
+        }
+
+        public CSVWriter build() {
+            CSVWriter csvWriterService = new CSVWriter(delimiter);
+            csvWriterService.open(fileName);
+            return csvWriterService;
+        }
     }
 }

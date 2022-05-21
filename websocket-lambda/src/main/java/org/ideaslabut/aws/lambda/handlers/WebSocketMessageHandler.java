@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WebSocketMessageHandler implements RequestHandler<ProxyRequestEvent, ProxyResponseEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketMessageHandler.class);
-    private WebSocketService webSocketService;
+    private final WebSocketService webSocketService;
 
     public WebSocketMessageHandler() {
         webSocketService = WebSocketService.getInstance();

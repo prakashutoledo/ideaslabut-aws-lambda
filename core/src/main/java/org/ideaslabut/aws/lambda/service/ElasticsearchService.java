@@ -2,16 +2,18 @@ package org.ideaslabut.aws.lambda.service;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Scroll;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.CreateRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.DeleteRequest;
+import org.ideaslabut.aws.lambda.domain.elasticsearch.request.IndexableBodyRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.Request;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.ScrollRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +22,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Objects;
 import java.util.Optional;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.function.Consumer;
 
 public class ElasticsearchService {
@@ -40,6 +42,11 @@ public class ElasticsearchService {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
+        this.httpClient = Objects.requireNonNull(httpClient);
+        this.objectMapper = objectMapper;
+    }
+
     public static ElasticsearchService getInstance() {
         if (INSTANCE == null) {
             synchronized (ElasticsearchService.class) {
@@ -55,11 +62,6 @@ public class ElasticsearchService {
         var httpClient = HttpClient.newHttpClient();
         var objectMapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
         return new ElasticsearchService(httpClient, objectMapper);
-    }
-
-    private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
-        this.httpClient = Objects.requireNonNull(httpClient);
-        this.objectMapper = objectMapper;
     }
 
     public Optional<Response> search(SearchRequest searchRequest) {
@@ -82,22 +84,22 @@ public class ElasticsearchService {
         return send(httpRequest(HTTP_METHOD_GET, scroll, apiPath), scrollRequest);
     }
 
-    public <T extends IndexBody> void create(CreateRequest<T> createRequest) {
+    public void create(CreateRequest<? extends IndexBody> createRequest) {
         checkRequest(createRequest);
         var apiPath = String.format("%s/_create/%s", createRequest.getIndex(), createRequest.getBody().getId());
         send(httpRequest(HTTP_METHOD_POST, createRequest.getBody(), apiPath), createRequest);
     }
 
-    public <T extends IndexBody> void delete(DeleteRequest<T> deleteRequest) {
+    public void delete(DeleteRequest<? extends IndexBody> deleteRequest) {
         checkRequest(deleteRequest);
         var apiPath = String.format("%s/_doc/%s", deleteRequest.getIndex(), deleteRequest.getBody().getId());
         send(httpRequest(HTTP_METHOD_DELETE, null, apiPath), deleteRequest);
     }
 
 
-    private void checkRequest(CreateRequest request) {
+    private void checkRequest(IndexableBodyRequest<? extends IndexBody> request) {
         if (request == null || request.getIndex() == null || request.getBody() == null || request.getBody().getId() == null) {
-            throw new IllegalArgumentException("Invalid create request");
+            throw new IllegalArgumentException("Invalid request");
         }
     }
 
@@ -113,11 +115,11 @@ public class ElasticsearchService {
 
         var response = search.get();
         var totalCount = response.getHits().getTotal().getValue();
-        if(totalCount == 0L) {
+        if (totalCount == 0L) {
             return;
         }
 
-        var scrollRequest = ScrollRequest.newBuilder()
+        var scrollRequest = ScrollRequest.builder()
                 .withScroll(searchRequest.getScroll())
                 .onException(searchRequest.getExceptionConsumer())
                 .onHttpError(searchRequest.getErrorConsumer())
@@ -126,7 +128,7 @@ public class ElasticsearchService {
                 .build();
         long count = 0;
 
-        while(count != totalCount) {
+        while (count != totalCount) {
             count += response.getHits().getHits().size();
             if (responseConsumer != null) {
                 responseConsumer.accept(response);
@@ -147,7 +149,7 @@ public class ElasticsearchService {
     private <T extends Request> Optional<Response> send(HttpRequest httpRequest, T searchRequest) {
         try {
             var response = httpClient.send(httpRequest, BodyHandlers.ofString());
-            if (response.statusCode() >=  400) {
+            if (response.statusCode() >= 400) {
                 Optional.ofNullable(searchRequest.getErrorConsumer()).ifPresent(consumer -> consumer.accept(response));
                 return Optional.empty();
             }
@@ -164,7 +166,7 @@ public class ElasticsearchService {
 
             return Optional.empty();
 
-        } catch (IOException  | InterruptedException exception) {
+        } catch (IOException | InterruptedException exception) {
             Optional.ofNullable(searchRequest.getExceptionConsumer()).ifPresent(consumer -> consumer.accept(exception));
             return Optional.empty();
         }

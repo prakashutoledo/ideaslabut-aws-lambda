@@ -2,23 +2,19 @@ package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
 
-public class DeleteRequest<C extends IndexBody> extends CreateRequest<C> {
-    public static class Builder<C extends IndexBody> extends BodyBuilder<C, DeleteRequest<C>, Builder<C>> {
+public class DeleteRequest<I extends IndexBody> extends IndexableBodyRequest<I> {
+    public static class Builder<I extends IndexBody> extends IndexableBodyRequest.Builder<I, DeleteRequest<I>, Builder<I>> {
         @Override
-        public DeleteRequest<C> build() {
+        public DeleteRequest<I> build() {
             return new DeleteRequest<>(this);
         }
     }
 
-    public static Builder<IndexBody> newDeleteBuilder() {
-        return newDeleteBuilder(IndexBody.class);
-    }
-
-    public static <C extends IndexBody> Builder<C> newDeleteBuilder(Class<C> klass) {
+    public static <I extends IndexBody> Builder<I> builder() {
         return new Builder<>();
     }
 
-    private DeleteRequest(Builder<C> builder) {
+    private DeleteRequest(Builder<I> builder) {
         super(builder);
     }
 }
