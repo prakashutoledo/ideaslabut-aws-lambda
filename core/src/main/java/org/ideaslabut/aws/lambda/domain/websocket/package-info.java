@@ -1,1 +1,0 @@
-package org.ideaslabut.aws.lambda.domain.websocket;

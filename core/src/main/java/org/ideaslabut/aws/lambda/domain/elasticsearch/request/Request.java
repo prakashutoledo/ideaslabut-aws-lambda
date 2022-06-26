@@ -6,8 +6,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
-@SuppressWarnings("unchecked")
 public abstract class Request {
+    @SuppressWarnings("unchecked")
     protected static abstract class BaseBuilder<R extends Request, B extends BaseBuilder<R, B>> {
         protected Consumer<Exception> exceptionConsumer;
         protected Consumer<HttpResponse<String>> errorConsumer;
@@ -37,9 +37,6 @@ public abstract class Request {
     private Consumer<Exception> exceptionConsumer;
     private Consumer<HttpResponse<String>> errorConsumer;
     private Consumer<HttpResponse<String>> successConsumer;
-    
-    protected Request() {
-    }
 
     protected Request(BaseBuilder<?, ?> baseBuilder) {
         setErrorConsumer(baseBuilder.errorConsumer);

@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.domain.websocket;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;

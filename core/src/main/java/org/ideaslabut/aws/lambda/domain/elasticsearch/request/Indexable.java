@@ -14,9 +14,6 @@ public abstract class Indexable extends Request {
         public abstract I build();
     }
 
-    protected Indexable() {
-    }
-
     protected Indexable(Builder<?, ?> builder) {
         super(builder);
         setIndex(builder.index);

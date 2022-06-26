@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.service;
 
 import static software.amazon.awssdk.regions.Region.US_EAST_2;
@@ -15,14 +18,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiAsyncClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
 
 import java.net.URI;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -30,7 +33,7 @@ import java.util.function.Consumer;
  * Service class for managing webSocket request context route
  *
  * @author Prakash Khadka <br>
- * Created on: Jan 30, 2022
+ *         Created on: Jan 30, 2022
  */
 public class WebSocketService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
@@ -41,7 +44,7 @@ public class WebSocketService {
     private static final String WEBSOCKET_MANAGEMENT_URL = "WEBSOCKET_MANAGEMENT_URL";
     private static final String WEB_SOCKET_INDEX_NAME = "socket";
 
-    private static WebSocketService INSTANCE = null;
+    private static volatile WebSocketService INSTANCE = null;
     private final ApiGatewayManagementApiClient apiGatewayManagementClient;
     private final ElasticsearchService elasticsearchService;
 
@@ -93,6 +96,11 @@ public class WebSocketService {
             return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
+        var domainName = proxyRequestEvent.getRequestContext().getDomainName();
+        if (domainName == null || !System.getenv(WEBSOCKET_MANAGEMENT_URL).contains(domainName)) {
+            return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
+        }
+
         var requestContext = proxyRequestEvent.getRequestContext();
         var routeKey = RouteKey.fromAction(proxyRequestEvent.getRequestContext().getRouteKey());
 
@@ -127,8 +135,7 @@ public class WebSocketService {
         };
 
         elasticsearchService.create(CreateRequest
-                .builder()
-                .withIndex(WEB_SOCKET_INDEX_NAME)
+                .builder().withIndex(WEB_SOCKET_INDEX_NAME)
                 .withBody(connection(connectionId))
                 .onHttpSuccess(responseConsumer)
                 .onHttpError(responseConsumer)
@@ -146,10 +153,7 @@ public class WebSocketService {
      */
     private ProxyResponseEvent removeConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> {
-            LOGGER.info("Create response {} with status {}", httpResponse.body(), httpResponse.statusCode());
-            statusCode.set(httpResponse.statusCode());
-        };
+        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
 
         elasticsearchService.delete(DeleteRequest
                 .builder()
@@ -167,7 +171,7 @@ public class WebSocketService {
      * current sender
      *
      * @param senderConnectionId a connection id of the sender to be filtered out
-     * @param body               a message body to be sent to all available connection
+     * @param body a message body to be sent to all available connection
      *
      * @return an api gateway response event with status code 200 if successful
      */
@@ -176,33 +180,39 @@ public class WebSocketService {
             throw new NullPointerException("A valid message body is required");
         }
 
-        final List<Boolean> statusList = new ArrayList<>();
+        final AtomicBoolean status = new AtomicBoolean(true);
         Consumer<Response> responseConsumer = response -> {
-            var status = response
+            var sendStatus = response
                     .getHits().getHits().stream()
                     .map(hit -> hit.getSource().get("connectionId"))
-                    .filter(Objects::nonNull)
-                    .map(connectionId -> sendMessage(connectionId, senderConnectionId, body))
+                    .filter(connectionId -> !Objects.equals(connectionId, senderConnectionId))
+                    .map(connectionId -> sendMessage(connectionId, body))
                     .reduce(true, (partial, sendMessageStatus) -> partial && sendMessageStatus);
-            statusList.add(status);
+            status.set(status.get() && sendStatus);
         };
 
-        elasticsearchService.searchAll(SearchRequest.builder().withSize(10).withIndex(WEB_SOCKET_INDEX_NAME).withScroll("1m").build(), responseConsumer, null);
-        return responseEvent(statusList.stream().anyMatch(value -> !value) ? HTTP_PARTIAL_CONTENT_STATUS_CODE : HTTP_OK_STATUS_CODE);
+        elasticsearchService.searchAll(
+                SearchRequest
+                        .builder()
+                        .withSize(10)
+                        .withIndex(WEB_SOCKET_INDEX_NAME)
+                        .withScroll("1m")
+                        .build(),
+                responseConsumer,
+                null
+        );
+        return responseEvent(status.get() ? HTTP_OK_STATUS_CODE : HTTP_PARTIAL_CONTENT_STATUS_CODE);
     }
 
     /**
      * Send the given message body to given webSocket connection id
      *
      * @param toConnectionId a webSocket connection to send given message body
-     * @param body           a message body to be sent to given connection id
+     * @param body a message body to be sent to given connection id
      *
      * @return <code>true</code> if successful otherwise <code>false</code>
      */
-    private boolean sendMessage(String toConnectionId, String fromConnectionId, Object body) {
-        if (toConnectionId.equals(fromConnectionId)) {
-            return false;
-        }
+    private boolean sendMessage(String toConnectionId, Object body) {
         var connectionRequest = PostToConnectionRequest
                 .builder()
                 .connectionId(toConnectionId)
@@ -210,7 +220,6 @@ public class WebSocketService {
                 .build();
         try {
             apiGatewayManagementClient.postToConnection(connectionRequest);
-
         } catch (Exception ignored) {
             return false;
         }
@@ -233,6 +242,13 @@ public class WebSocketService {
         return proxyResponseEvent;
     }
 
+    /**
+     * Builds a webSocket index body from given connection id
+     *
+     * @param connectionId a connection id to set
+     *
+     * @return a newly created index body instance
+     */
     private IndexBody connection(String connectionId) {
         var connection = new IndexBody();
         connection.setId(connectionId);

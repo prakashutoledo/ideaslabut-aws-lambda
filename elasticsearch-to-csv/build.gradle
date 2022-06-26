@@ -1,10 +1,13 @@
 dependencies {
-    implementation project(":core")
-    implementation project(":extractor-util")
-    implementation "org.slf4j:slf4j-nop"
+    implementation project(':core')
+    implementation project(':extractor-util')
+    implementation 'org.slf4j:slf4j-nop'
 }
 
 task extractElasticsearchData(type: JavaExec) {
-    mainClass = "org.ideaslabut.aws.lambda.estocsv.ElasticsearchToCsv"
+    standardOutput = System.out
+    environment "ELASTICSEARCH_AUTHENTICATION_KEY", "ZWxhc3RpYzpjaGFuZ2VtZQ=="
+    environment "ELASTICSEARCH_URL", "http://localhost:9200"
+    mainClass = 'org.ideaslabut.aws.lambda.estocsv.ElasticsearchToCsv'
     classpath = sourceSets.main.runtimeClasspath
 }

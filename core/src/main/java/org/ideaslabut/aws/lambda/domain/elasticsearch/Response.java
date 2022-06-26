@@ -1,12 +1,11 @@
 package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
- * Class that mimic Elasticsearch search api response with hits value only
+ * Class that mimics Elasticsearch search api response with hits value only
  *
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022

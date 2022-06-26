@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.service;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
@@ -27,6 +30,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+/**
+ * Service class as elasticsearch client
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class ElasticsearchService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchService.class);
 
@@ -38,15 +47,27 @@ public class ElasticsearchService {
     private static final String HTTP_METHOD_POST = "POST";
     private static final String HTTP_METHOD_DELETE = "DELETE";
 
-    private static ElasticsearchService INSTANCE = null;
+    private static volatile ElasticsearchService INSTANCE = null;
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a new instance of {@link ElasticsearchService}
+     *
+     * @param httpClient a http client to set
+     * @param objectMapper an object mapper to set
+     */
     private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = Objects.requireNonNull(httpClient);
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Gets the thread safe singleton instance of {@link ElasticsearchService}
+     *
+     * @return a thread safe singleton instance of elasticsearch service
+     */
     public static ElasticsearchService getInstance() {
         if (INSTANCE == null) {
             synchronized (ElasticsearchService.class) {
@@ -58,6 +79,11 @@ public class ElasticsearchService {
         return INSTANCE;
     }
 
+    /**
+     * Creates a new instance of {@link ElasticsearchService}
+     *
+     * @return a newly created elasticsearch service
+     */
     private static ElasticsearchService buildInstance() {
         var httpClient = HttpClient.newHttpClient();
         var objectMapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -119,6 +145,7 @@ public class ElasticsearchService {
             return;
         }
 
+        var count = 0L;
         var scrollRequest = ScrollRequest.builder()
                 .withScroll(searchRequest.getScroll())
                 .onException(searchRequest.getExceptionConsumer())
@@ -126,10 +153,10 @@ public class ElasticsearchService {
                 .onHttpSuccess(searchRequest.getSuccessConsumer())
                 .withIndex(searchRequest.getIndex())
                 .build();
-        long count = 0;
 
         while (count != totalCount) {
             count += response.getHits().getHits().size();
+
             if (responseConsumer != null) {
                 responseConsumer.accept(response);
             }
@@ -150,15 +177,14 @@ public class ElasticsearchService {
         try {
             var response = httpClient.send(httpRequest, BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
+                LOGGER.debug("Request with {} failed due to status code {}", searchRequest, response.statusCode());
                 Optional.ofNullable(searchRequest.getErrorConsumer()).ifPresent(consumer -> consumer.accept(response));
                 return Optional.empty();
             }
 
             Optional.ofNullable(searchRequest.getSuccessConsumer()).ifPresent(consumer -> consumer.accept(response));
 
-            if (response.statusCode() != 200) {
-                return Optional.empty();
-            }
+            LOGGER.info("Successfully processed request {} with status code {}", searchRequest, response.statusCode());
 
             if (response.body() != null) {
                 return Optional.of(objectMapper.readValue(response.body(), Response.class));
@@ -167,6 +193,7 @@ public class ElasticsearchService {
             return Optional.empty();
 
         } catch (IOException | InterruptedException exception) {
+            LOGGER.debug("Unable to perform request for {}", searchRequest);
             Optional.ofNullable(searchRequest.getExceptionConsumer()).ifPresent(consumer -> consumer.accept(exception));
             return Optional.empty();
         }
@@ -184,12 +211,9 @@ public class ElasticsearchService {
 
     private HttpRequest httpRequest(String method, String jsonBody, String apiPath) {
         var url = System.getenv(ELASTICSEARCH_URL);
-
         if (apiPath != null && !apiPath.isEmpty()) {
             url = String.format("%s/%s", url, apiPath);
         }
-
-        LOGGER.info("Url {}", url);
 
         var bodyPublisher = Optional.ofNullable(jsonBody)
                 .map(BodyPublishers::ofString)

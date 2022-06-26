@@ -5,6 +5,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 
 import java.io.BufferedWriter;
 import java.io.Flushable;
@@ -16,12 +17,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class CSVWriter implements AutoCloseable, Flushable {
     private static final char UTF8_BOM = '\ufeff';
     private static final String DEFAULT_WRITER_DIRECTORY = "build/elasticsearch";
-    private static final String CSV_EXTENSION = ".csv";
+    private static final String CSV_EXTENSION = "csv";
 
     private final String delimiter;
     private BufferedWriter printWriter;
@@ -63,12 +63,12 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         if (headers.isEmpty()) {
-            var firstProperty = properties.get(0);
-            writeHeaders(firstProperty.keySet());
+            var headers = properties.get(0);
+            writeHeaders(headers.keySet());
         }
 
         properties.stream()
-                .map(map -> headers.stream().map(map::get).collect(Collectors.joining(delimiter)))
+                .map(map -> headers.stream().map(map::get).collect(joining(delimiter)))
                 .forEach(this::writeLine);
     }
 
@@ -119,9 +119,9 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         public CSVWriter build() {
-            CSVWriter csvWriterService = new CSVWriter(delimiter);
-            csvWriterService.open(fileName);
-            return csvWriterService;
+            var csvWriter = new CSVWriter(delimiter);
+            csvWriter.open(fileName);
+            return csvWriter;
         }
     }
 }
