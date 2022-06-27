@@ -4,6 +4,6 @@
 
 /**
  * @author Prakash Khadka <br>
- *     Created On: Jun 27, 2022
+ *         Created on: Jan 30, 2022
  */
-package org.ideaslabut.aws.lambda.domain.elasticsearch;
+package org.ideaslabut.aws.lambda.domain.sneaky;

@@ -7,6 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+/**
+ * A pojo that mimics elasticsearch scroll response json node
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class Scroll {
     @JsonProperty("scroll_id")
     private String scrollId;

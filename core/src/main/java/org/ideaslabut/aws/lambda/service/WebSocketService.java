@@ -138,7 +138,8 @@ public class WebSocketService {
             .withBody(connection(connectionId))
             .onHttpSuccess(responseConsumer)
             .onHttpError(responseConsumer)
-            .build());
+            .build()
+        );
 
         return responseEvent(statusCode.get());
     }
@@ -152,7 +153,7 @@ public class WebSocketService {
      */
     private ProxyResponseEvent removeConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
+        Consumer<HttpResponse<String>> responseConsumer = response -> statusCode.set(response.statusCode());
 
         elasticsearchService.delete(DeleteRequest
             .builder()
@@ -160,7 +161,8 @@ public class WebSocketService {
             .onHttpError(responseConsumer)
             .onHttpSuccess(responseConsumer)
             .withIndex(WEB_SOCKET_INDEX_NAME)
-            .build());
+            .build()
+        );
 
         return responseEvent(statusCode.get());
     }
@@ -181,8 +183,7 @@ public class WebSocketService {
 
         final AtomicBoolean status = new AtomicBoolean(true);
         Consumer<Response> responseConsumer = response -> {
-            var sendStatus = response
-                .getHits().getHits().stream()
+            var sendStatus = response.getHits().getHits().stream()
                 .map(hit -> hit.getSource().get("connectionId"))
                 .filter(connectionId -> !Objects.equals(connectionId, senderConnectionId))
                 .map(connectionId -> sendMessage(connectionId, body))

@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  * Service class as elasticsearch client
  *
  * @author Prakash Khadka <br>
- *         Created on: Jan 30, 2022
+ *     Created on: Jan 30, 2022
  */
 public class ElasticsearchService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchService.class);
@@ -91,8 +91,16 @@ public class ElasticsearchService {
         return new ElasticsearchService(httpClient, objectMapper);
     }
 
+    /**
+     * Performs an elasticsearch search request for given request details <br>
+     *
+     * api path : {@code  GET {indexName}/_search?size={size}&scroll={scrollTime}}
+     * @param searchRequest an elasticsearch search request to use
+     *
+     * @return an optional elasticsearch response
+     */
     public Optional<Response> search(SearchRequest searchRequest) {
-        LOGGER.info("Search elasticsearch for request {}", searchRequest);
+        LOGGER.debug("Performing elasticsearch search request {}", searchRequest);
         if (searchRequest == null || searchRequest.getIndex() == null) {
             return Optional.empty();
         }
@@ -100,7 +108,17 @@ public class ElasticsearchService {
         return send(httpRequest(HTTP_METHOD_GET, null, apiPath), searchRequest);
     }
 
+    /**
+     * Performs an elasticsearch scroll request for given scroll request details <br>
+     *
+     * api path : {@code  GET _search/scroll?scroll={scrollValue}} with request body {"_scroll_id": ""}
+     *
+     * @param scrollRequest a scroll request to use
+     *
+     * @return an optional elasticsearch response
+     */
     public Optional<Response> scroll(ScrollRequest scrollRequest) {
+        LOGGER.debug("Performing elasticsearch scroll request {}", scrollRequest);
         if (scrollRequest == null || scrollRequest.getScrollId() == null) {
             return Optional.empty();
         }
@@ -111,51 +129,70 @@ public class ElasticsearchService {
         return send(httpRequest(HTTP_METHOD_GET, scroll, apiPath), scrollRequest);
     }
 
+    /**
+     * Performs create index api request for given elasticsearch create request details <br>
+     * api path : {@code  POST _create/{indexName}/{uniqueDocumentId}} with request body {"connectionId": ""}
+     *
+     * @param createRequest a create request to use
+     */
     public void create(CreateRequest<? extends IndexBody> createRequest) {
+        LOGGER.debug("Performing elasticsearch create document request {}", createRequest);
         checkRequest(createRequest);
         var apiPath = String.format("%s/_create/%s", createRequest.getIndex(), createRequest.getBody().getId());
         send(httpRequest(HTTP_METHOD_POST, createRequest.getBody(), apiPath), createRequest);
     }
 
+    /**
+     * Performs elasticsearch document delete api operation for given delete request <br>
+     * api path : {@code  DELETE {indexName}/_doc/{uniqueDocumentId}}
+     *
+     * @param deleteRequest a delete request to set
+     */
     public void delete(DeleteRequest<? extends IndexBody> deleteRequest) {
+        LOGGER.debug("Performing elasticsearch delete document request {}", deleteRequest);
         checkRequest(deleteRequest);
         var apiPath = String.format("%s/_doc/%s", deleteRequest.getIndex(), deleteRequest.getBody().getId());
         send(httpRequest(HTTP_METHOD_DELETE, null, apiPath), deleteRequest);
     }
 
-
-    private void checkRequest(IndexableBodyRequest<? extends IndexBody> request) {
-        if (request == null || request.getIndex() == null || request.getBody() == null || request.getBody().getId() == null) {
-            throw new IllegalArgumentException("Invalid request");
-        }
-    }
-
+    /**
+     * Search all the elasticsearch documents in the index based on given search request.
+     * First of all, it will perform basic elasticsearch search request to find the total document count
+     * in the index, then it will perform scroll request based the scroll id given by search request.
+     * Based on the size documents to be retrieved for each scroll request until it reaches the total document
+     * count, each successful scroll request will invoke responseConsumer. Once all the scroll request
+     * is completed then given onComplete consumer will be invoked to finalize the search all documents operation.
+     *
+     * @param searchRequest an elasticsearch search request to use
+     * @param responseConsumer a response consumer to be invoked for each scroll request completion operation
+     * @param onComplete an on complete consumer to be invoked to finalize search all operation
+     */
     public void searchAll(SearchRequest searchRequest, Consumer<Response> responseConsumer, NoArgConsumer onComplete) {
         if (searchRequest.getScroll() == null) {
             return;
         }
 
-        var search = search(searchRequest);
-        if (search.isEmpty()) {
+        var searchResponse = search(searchRequest);
+        if (searchResponse.isEmpty()) {
             return;
         }
 
-        var response = search.get();
-        var totalCount = response.getHits().getTotal().getValue();
+        var totalCount = searchResponse.get().getHits().getTotal().getValue();
         if (totalCount == 0L) {
             return;
         }
 
         var count = 0L;
         var scrollRequest = ScrollRequest.builder()
-                .withScroll(searchRequest.getScroll())
-                .onException(searchRequest.getExceptionConsumer())
-                .onHttpError(searchRequest.getErrorConsumer())
-                .onHttpSuccess(searchRequest.getSuccessConsumer())
-                .withIndex(searchRequest.getIndex())
-                .build();
+            .withScroll(searchRequest.getScroll())
+            .onException(searchRequest.getExceptionConsumer())
+            .onHttpError(searchRequest.getErrorConsumer())
+            .onHttpSuccess(searchRequest.getSuccessConsumer())
+            .withIndex(searchRequest.getIndex())
+            .build();
 
-        while (count != totalCount) {
+        while (searchResponse.isPresent() && count != totalCount) {
+            var response = searchResponse.get();
             count += response.getHits().getHits().size();
 
             if (responseConsumer != null) {
@@ -163,28 +200,52 @@ public class ElasticsearchService {
             }
 
             scrollRequest.setScrollId(response.getScrollId());
-            search = scroll(scrollRequest);
-            if (search.isEmpty()) {
-                break;
-            }
-            response = search.get();
+            searchResponse = scroll(scrollRequest);
         }
 
         Optional.ofNullable(onComplete).ifPresent(NoArgConsumer::accept);
     }
 
-    private <T extends Request> Optional<Response> send(HttpRequest httpRequest, T searchRequest) {
+    /**
+     * Checks the validity of this given request
+     *
+     * @param request a request to be validated
+     *
+     * @throws IllegalArgumentException if any of the request, index, body or bodyId is null
+     */
+    private void checkRequest(IndexableBodyRequest<? extends IndexBody> request) {
+        if (request == null || request.getIndex() == null || request.getBody() == null || request.getBody().getId() == null) {
+            throw new IllegalArgumentException("Invalid request");
+        }
+    }
+
+    /**
+     * Send the given http request using underlying http client.
+     * This will not throw any exception rather it will catch any underlying exception and notify
+     * the sender by using exception consumer.
+     *
+     * If http client response is bad then it will notify the sender by using error consumer. If http client
+     * response doesn't have any body but the request is successful, it will return empty elasticsearch response.
+     * For any successful request it will use success consumer to notify sender that underlying http call was a success
+     *
+     * @param httpRequest an http request to send
+     * @param elasticsearchRequest an elasticsearch request to use to perform completion of http request
+     * @param <T> a type of elasticsearch request
+     *
+     * @return an optional elasticsearch response
+     */
+    private <T extends Request> Optional<Response> send(HttpRequest httpRequest, T elasticsearchRequest) {
         try {
             var response = httpClient.send(httpRequest, BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
-                LOGGER.debug("Request with {} failed due to status code {}", searchRequest, response.statusCode());
-                Optional.ofNullable(searchRequest.getErrorConsumer()).ifPresent(consumer -> consumer.accept(response));
+                LOGGER.error("Request with {} failed due to status code {}", elasticsearchRequest, response.statusCode());
+                Optional.ofNullable(elasticsearchRequest.getErrorConsumer()).ifPresent(consumer -> consumer.accept(response));
                 return Optional.empty();
             }
 
-            Optional.ofNullable(searchRequest.getSuccessConsumer()).ifPresent(consumer -> consumer.accept(response));
+            Optional.ofNullable(elasticsearchRequest.getSuccessConsumer()).ifPresent(consumer -> consumer.accept(response));
 
-            LOGGER.info("Successfully processed request {} with status code {}", searchRequest, response.statusCode());
+            LOGGER.debug("Successfully processed request {} with status code {}", elasticsearchRequest, response.statusCode());
 
             if (response.body() != null) {
                 return Optional.of(objectMapper.readValue(response.body(), Response.class));
@@ -193,12 +254,22 @@ public class ElasticsearchService {
             return Optional.empty();
 
         } catch (IOException | InterruptedException exception) {
-            LOGGER.debug("Unable to perform request for {}", searchRequest);
-            Optional.ofNullable(searchRequest.getExceptionConsumer()).ifPresent(consumer -> consumer.accept(exception));
+            LOGGER.error("Unable to perform request for {} because of {}", elasticsearchRequest, exception);
+            Optional.ofNullable(elasticsearchRequest.getExceptionConsumer()).ifPresent(consumer -> consumer.accept(exception));
             return Optional.empty();
         }
     }
 
+    /**
+     * Builds the http request for given method, body, and api path.
+     *
+     * @param method a http method to set
+     * @param body a request body to set
+     * @param apiPath an api path to use
+     * @param <T> a type of request body
+     *
+     * @return a newly created http request
+     */
     private <T> HttpRequest httpRequest(String method, T body, String apiPath) {
         String jsonBody;
         try {
@@ -209,6 +280,17 @@ public class ElasticsearchService {
         return httpRequest(method, jsonBody, apiPath);
     }
 
+    /**
+     * Builds a http request from given http method, json body and api path.
+     * The base url is get from environment variable. All authentication header
+     * and content type header are also set here.
+     *
+     * @param method a http method to set
+     * @param jsonBody a string json body to set
+     * @param apiPath an api path to be appended to base url
+     *
+     * @return a newly created http request
+     */
     private HttpRequest httpRequest(String method, String jsonBody, String apiPath) {
         var url = System.getenv(ELASTICSEARCH_URL);
         if (apiPath != null && !apiPath.isEmpty()) {
@@ -216,12 +298,12 @@ public class ElasticsearchService {
         }
 
         var bodyPublisher = Optional.ofNullable(jsonBody)
-                .map(BodyPublishers::ofString)
-                .orElseGet(BodyPublishers::noBody);
+            .map(BodyPublishers::ofString)
+            .orElseGet(BodyPublishers::noBody);
         return HttpRequest.newBuilder().method(method, bodyPublisher)
-                .uri(URI.create(url))
-                .setHeader("Authorization", String.format("Basic %s", System.getenv(ELASTICSEARCH_AUTHENTICATION_KEY)))
-                .setHeader("Content-Type", CONTENT_TYPE_JSON)
-                .build();
+            .uri(URI.create(url))
+            .setHeader("Authorization", String.format("Basic %s", System.getenv(ELASTICSEARCH_AUTHENTICATION_KEY)))
+            .setHeader("Content-Type", CONTENT_TYPE_JSON)
+            .build();
     }
 }

@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.extractor.util;
 
 import java.io.PrintStream;
@@ -60,6 +63,7 @@ public class ProgressBar {
     private final StringBuilder delimiterBuilder;
     private long startTime;
     private long currentElementSize;
+    private boolean status;
 
     private ProgressBar(Builder builder) {
         this(builder.maxStep, builder.totalElement, builder.delimiter, builder.printStream, builder.prefix);
@@ -70,11 +74,12 @@ public class ProgressBar {
         this.printStream = Objects.requireNonNull(printStream, "Print stream should not be null");
         this.maxStep = validateMaxStep(maxStep);
         this.totalElement = validateTotalElement(totalElement);
-        this.format = (prefix == null ? "" : prefix) + " [%-" + this.maxStep + "s]" + " [%" +
+        this.format = "\r" + (prefix == null ? "" : prefix) + " [%-" + this.maxStep + "s]" + " [%" +
                 String.valueOf(totalElement).length() + "d/" +
-                totalElement + "] [%3d%%] [%s]\r";
+                totalElement + "] [%3d%%] [%s] [%s]";
         this.delimiterBuilder = new StringBuilder();
         this.currentElementSize = 0;
+        this.status = false;
     }
 
     private int validateMaxStep(int maxStep) {
@@ -138,7 +143,12 @@ public class ProgressBar {
             IntStream.range(0, remainingDelimiter).mapToObj(i -> "#").forEach(delimiterBuilder::append);
         }
 
-        printStream.printf(format, delimiterBuilder.toString(), currentElementSize, percentage, formattedMillis(endTime - startTime));
+        var statusString = status ? "|" : "-";
+        if (currentElementSize >= totalElement) {
+            statusString = "done...";
+        }
+        printStream.printf(format, delimiterBuilder.toString(), currentElementSize, percentage, formattedMillis(endTime - startTime), statusString);
+        status = !status;
     }
 
     private static String formattedMillis(long millis) {

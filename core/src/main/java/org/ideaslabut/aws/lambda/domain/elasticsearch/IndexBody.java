@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
- * Pojo holding webSocket connection details
+ * Pojo holding an elasticsearch document body for this index
  *
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022

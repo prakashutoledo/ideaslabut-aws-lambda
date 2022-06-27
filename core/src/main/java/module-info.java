@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
+/**
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 module ideaslabut.aws.lambda.core {
     requires transitive java.net.http;
     requires transitive com.fasterxml.jackson.databind;

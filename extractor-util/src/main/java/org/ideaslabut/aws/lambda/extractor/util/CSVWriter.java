@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.extractor.util;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -68,8 +71,8 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         properties.stream()
-                .map(map -> headers.stream().map(map::get).collect(joining(delimiter)))
-                .forEach(this::writeLine);
+            .map(map -> headers.stream().map(map::get).collect(joining(delimiter)))
+            .forEach(this::writeLine);
     }
 
     private void writeHeaders() {

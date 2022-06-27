@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.handlers;
 
 import com.amazonaws.services.lambda.runtime.Context;

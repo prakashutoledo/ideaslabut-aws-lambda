@@ -9,5 +9,8 @@ package org.ideaslabut.aws.lambda.domain.sneaky;
  */
 @FunctionalInterface
 public interface NoArgConsumer {
+    /**
+     * Performs the operation
+     */
     void accept();
 }

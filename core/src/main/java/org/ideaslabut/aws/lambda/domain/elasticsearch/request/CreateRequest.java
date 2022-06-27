@@ -1,13 +1,21 @@
+/*
+ * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
 
 /**
+ * Elasticsearch request to create index
+ *
  * @param <I> a type of body hold by this request
+ *
+ * @author Prakash Khadka <br>
+ *     Created On: Jun 27, 2022
  */
 public class CreateRequest<I extends IndexBody> extends IndexableBodyRequest<I> {
     /**
-     * Creates a new builder for creating
+     * Creates a new instance of elasticsearch create request
      *
      * @param <I> a type of body hold by this builder
      *
@@ -18,12 +26,15 @@ public class CreateRequest<I extends IndexBody> extends IndexableBodyRequest<I> 
     }
 
     /**
+     * Elasticsearch create request builder
+     *
      * @param <I> a type of body hold by this builder
      */
     public static class Builder<I extends IndexBody> extends IndexableBodyRequest.Builder<I, CreateRequest<I>, Builder<I>> {
         /**
+         * Builds a new instance of {@link CreateRequest}
          *
-         * @return
+         * @return a newly created {@link CreateRequest}
          */
         @Override
         public CreateRequest<I> build() {
@@ -31,6 +42,10 @@ public class CreateRequest<I extends IndexBody> extends IndexableBodyRequest<I> 
         }
     }
 
+    /**
+     * Creates a new instance of {@link CreateRequest}
+     * @param builder
+     */
     protected CreateRequest(Builder<I> builder) {
         super(builder);
     }

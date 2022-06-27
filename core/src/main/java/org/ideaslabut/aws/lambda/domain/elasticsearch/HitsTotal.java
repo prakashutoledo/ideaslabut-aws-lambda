@@ -6,6 +6,12 @@ package org.ideaslabut.aws.lambda.domain.elasticsearch;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+/**
+ * An elasticsearch search response hits total
+ *
+ * @author Prakash Khadka <br>
+ *     Created On: Jun 27, 2022
+ */
 public class HitsTotal {
     private long value;
 
