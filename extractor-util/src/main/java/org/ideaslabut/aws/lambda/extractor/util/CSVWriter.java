@@ -10,13 +10,14 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
-import java.io.BufferedWriter;
+import org.ideaslabut.aws.lambda.domain.sneaky.UncheckedIOFunction;
+
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,25 +28,17 @@ public class CSVWriter implements AutoCloseable, Flushable {
     private static final String CSV_EXTENSION = "csv";
 
     private final String delimiter;
-    private BufferedWriter printWriter;
+    private final Writer printWriter;
     private Set<String> headers;
 
-    private CSVWriter(String delimiter) {
+    private CSVWriter(String delimiter, Writer printWriter, Set<String> headers) {
         this.delimiter = delimiter;
-        this.headers = new HashSet<>();
+        this.printWriter = printWriter;
+        this.headers = headers;
     }
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    private void open(String fileName) {
-        try {
-            Files.createDirectories(Path.of(DEFAULT_WRITER_DIRECTORY));
-            printWriter = Files.newBufferedWriter(Path.of(String.format("%s/%s.%s", DEFAULT_WRITER_DIRECTORY, requireNonNull(fileName), CSV_EXTENSION)), UTF_8, CREATE, TRUNCATE_EXISTING, WRITE);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
     }
 
     public void writeHeaders(Set<String> headers) {
@@ -105,6 +98,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
     public static class Builder {
         private String fileName;
         private String delimiter;
+        private Set<String> headers;
 
         private Builder() {
             this.delimiter = ",";
@@ -112,7 +106,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         public Builder withFileName(String fileName) {
-            this.fileName = fileName;
+            this.fileName = requireNonNull(fileName);
             return this;
         }
 
@@ -121,10 +115,29 @@ public class CSVWriter implements AutoCloseable, Flushable {
             return this;
         }
 
+        public Builder withHeaders(Set<String> headers) {
+            this.headers = headers;
+            return this;
+        }
+
         public CSVWriter build() {
-            var csvWriter = new CSVWriter(delimiter);
-            csvWriter.open(fileName);
-            return csvWriter;
+            var printWriterFactory = UncheckedIOFunction.wrap((String fileName) -> {
+                Files.createDirectories(Path.of(DEFAULT_WRITER_DIRECTORY));
+                return Files.newBufferedWriter(
+                    Path.of(
+                        String.format("%s/%s.%s",
+                            DEFAULT_WRITER_DIRECTORY,
+                            fileName,
+                            CSV_EXTENSION
+                        )
+                    ),
+                    UTF_8,
+                    CREATE,
+                    TRUNCATE_EXISTING,
+                    WRITE
+                );
+            });
+            return new CSVWriter(delimiter, printWriterFactory.apply(fileName), headers);
         }
     }
 }

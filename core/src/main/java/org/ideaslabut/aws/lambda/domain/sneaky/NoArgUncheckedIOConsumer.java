@@ -15,19 +15,14 @@ import java.util.Objects;
  * @author Prakash Khadka <br>
  *     Created On: Jun 27, 2022
  */
+@FunctionalInterface
 public interface NoArgUncheckedIOConsumer<E extends IOException> {
-    /**
-     * Performs the operation
-     *
-     * @throws E An exception of type {@link IOException}
-     */
-    void accept() throws E;
-
     /**
      * Returns a wrapped consumer that performs operation on given no argument consumer catching
      * checked {@link IOException} and rethrowing {@link UncheckedIOException}
      *
      * @param noArgConsumer A no argument consumer to perform operation on
+     *
      * @return a wrapped consumer
      */
     static NoArgConsumer wrap(NoArgUncheckedIOConsumer<? super IOException> noArgConsumer) {
@@ -40,4 +35,11 @@ public interface NoArgUncheckedIOConsumer<E extends IOException> {
             }
         };
     }
+
+    /**
+     * Performs the operation
+     *
+     * @throws E An exception of type {@link IOException}
+     */
+    void accept() throws E;
 }

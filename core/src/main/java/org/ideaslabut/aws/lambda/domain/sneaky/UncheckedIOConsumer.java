@@ -15,18 +15,10 @@ import java.util.function.Consumer;
  * @param <E> A type of exception extending {@link IOException}
  *
  * @author Prakash Khadka <br>
- *         Created On: Jun 27, 2022
+ *     Created On: Jun 27, 2022
  */
 @FunctionalInterface
 public interface UncheckedIOConsumer<T, E extends IOException> {
-    /**
-     * Performs the operation on given value
-     *
-     * @param value A value to perform operation on
-     * @throws E IOException
-     */
-    void accept(final T value) throws E;
-
     /**
      * Returns a wrapped consumer that performs operation on given unchecked io consumer catching
      * io exception and rethrowing unchecked io exception
@@ -46,4 +38,13 @@ public interface UncheckedIOConsumer<T, E extends IOException> {
             }
         };
     }
+
+    /**
+     * Performs the operation on given value
+     *
+     * @param value A value to perform operation on
+     *
+     * @throws E IOException
+     */
+    void accept(final T value) throws E;
 }

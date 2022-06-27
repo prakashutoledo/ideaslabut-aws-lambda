@@ -4,6 +4,8 @@
 package org.ideaslabut.aws.lambda.domain.sneaky;
 
 /**
+ * A no argument consumer
+ *
  * @author Prakash Khadka <br>
  *     Created On: Jun 27, 2022
  */
