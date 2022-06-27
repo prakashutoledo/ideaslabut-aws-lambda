@@ -14,4 +14,5 @@ module ideaslabut.aws.lambda.core {
     exports org.ideaslabut.aws.lambda.domain.elasticsearch.request;
     exports org.ideaslabut.aws.lambda.domain.websocket;
     exports org.ideaslabut.aws.lambda.service;
+    exports org.ideaslabut.aws.lambda.domain.sneaky;
 }

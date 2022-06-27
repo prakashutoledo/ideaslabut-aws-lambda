@@ -3,30 +3,35 @@ package org.ideaslabut.aws.lambda.estocsv;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.Response;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.SourceHits;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
+import org.ideaslabut.aws.lambda.domain.sneaky.NoArgUncheckedIOConsumer;
+import org.ideaslabut.aws.lambda.domain.sneaky.UncheckedIOConsumer;
 import org.ideaslabut.aws.lambda.extractor.util.CSVWriter;
 import org.ideaslabut.aws.lambda.extractor.util.ProgressBar;
 import org.ideaslabut.aws.lambda.service.ElasticsearchService;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Arrays;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ElasticsearchToCsv {
     private static final ElasticsearchService ELASTICSEARCH_SERVICE = ElasticsearchService.getInstance();
-    
+
     public static void main(String[] args) {
-        String indexName = "accelerometer";
-        searchAll("accelerometer", 1000);
-        searchAll("gyroscope", 1000);
-        searchAll("gsr", 20);
-        searchAll("heartrate", 5);
-        searchAll("ibi", 5);
-        searchAll("temperature", 1);
+        Stream.of(IndexMap.of("accelerometer", 1000),
+                IndexMap.of("gyroscope", 1000),
+                IndexMap.of("gsr", 20),
+                IndexMap.of("heartrate", 5),
+                IndexMap.of("ibi", 5),
+                IndexMap.of("temperature", 1)
+        ).forEach(ElasticsearchToCsv::searchAll);
+
     }
-    
+
+    private static void searchAll(IndexMap indexMap) {
+        searchAll(indexMap.indexName, indexMap.size);
+    }
+
     private static void searchAll(String indexName, int size) {
+
         long startTime = System.currentTimeMillis();
         var totalElementSearch = SearchRequest.builder().withSize(1).withIndex(indexName).build();
         var totalElementSearchRequest = ElasticsearchService.getInstance().search(totalElementSearch);
@@ -45,25 +50,17 @@ public class ElasticsearchToCsv {
 
         final var csvWriter = CSVWriter.builder().withDelimiter(",").withFileName(indexName).build();
 
-        Consumer<Response> consumer = response -> {
+        var consumer = UncheckedIOConsumer.wrap((Response response) -> {
             progressBar.updateBy(response.getHits().getHits().size());
             csvWriter.writeProperties(response.getHits().getHits().stream().map(SourceHits::getSource).collect(Collectors.toList()));
-            try {
-                csvWriter.flush();
-            } catch (IOException exception) {
-                throw new UncheckedIOException(exception);
-            }
-        };
+            csvWriter.flush();
+        });
 
-        Consumer<Void> onComplete = ignored -> {
-            try {
-                csvWriter.flush();
-                csvWriter.close();
-                System.out.println();
-            } catch (IOException exception) {
-                throw new UncheckedIOException(exception);
-            }
-        };
+        var onComplete = NoArgUncheckedIOConsumer.wrap(() -> {
+            csvWriter.flush();
+            csvWriter.close();
+            System.out.println();
+        });
 
         progressBar.initStartTime();
         var searchRequest = SearchRequest.builder()
@@ -72,6 +69,20 @@ public class ElasticsearchToCsv {
                 .withIndex(indexName)
                 .build();
 
-        ELASTICSEARCH_SERVICE.searchAll(searchRequest, consumer, onComplete);   
+        ELASTICSEARCH_SERVICE.searchAll(searchRequest, consumer, onComplete);
+    }
+
+    private static class IndexMap {
+        private final String indexName;
+        private final int size;
+
+        private IndexMap(String indexName, int size) {
+            this.indexName = indexName;
+            this.size = size;
+        }
+
+        public static IndexMap of(String indexName, int size) {
+            return new IndexMap(indexName, size);
+        }
     }
 }

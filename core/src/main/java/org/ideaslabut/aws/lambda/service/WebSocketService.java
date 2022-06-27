@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiAsyncClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient;
 import software.amazon.awssdk.services.apigatewaymanagementapi.model.PostToConnectionRequest;
 
@@ -33,7 +32,7 @@ import java.util.function.Consumer;
  * Service class for managing webSocket request context route
  *
  * @author Prakash Khadka <br>
- *         Created on: Jan 30, 2022
+ *     Created on: Jan 30, 2022
  */
 public class WebSocketService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
@@ -71,10 +70,10 @@ public class WebSocketService {
 
     private static WebSocketService buildInstance() {
         var apiGatewayManagementClient = ApiGatewayManagementApiClient.builder()
-                .region(US_EAST_2)
-                .httpClientBuilder(UrlConnectionHttpClient.builder())
-                .endpointOverride(URI.create(System.getenv(WEBSOCKET_MANAGEMENT_URL)))
-                .build();
+            .region(US_EAST_2)
+            .httpClientBuilder(UrlConnectionHttpClient.builder())
+            .endpointOverride(URI.create(System.getenv(WEBSOCKET_MANAGEMENT_URL)))
+            .build();
         return new WebSocketService(apiGatewayManagementClient, ElasticsearchService.getInstance());
     }
 
@@ -86,7 +85,7 @@ public class WebSocketService {
      * @param proxyRequestEvent a websocket proxy event to process
      *
      * @return an api gateway response event with proper status code and empty body
-     * For null events and requestContext a status code of 400 will be returned otherwise returns 200
+     *     For null events and requestContext a status code of 400 will be returned otherwise returns 200
      *
      * @throws IllegalStateException if no route key are matched, api gateway default route key is considered
      *                               as unmatched
@@ -135,11 +134,11 @@ public class WebSocketService {
         };
 
         elasticsearchService.create(CreateRequest
-                .builder().withIndex(WEB_SOCKET_INDEX_NAME)
-                .withBody(connection(connectionId))
-                .onHttpSuccess(responseConsumer)
-                .onHttpError(responseConsumer)
-                .build());
+            .builder().withIndex(WEB_SOCKET_INDEX_NAME)
+            .withBody(connection(connectionId))
+            .onHttpSuccess(responseConsumer)
+            .onHttpError(responseConsumer)
+            .build());
 
         return responseEvent(statusCode.get());
     }
@@ -156,12 +155,12 @@ public class WebSocketService {
         Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
 
         elasticsearchService.delete(DeleteRequest
-                .builder()
-                .withBody(connection(connectionId))
-                .onHttpError(responseConsumer)
-                .onHttpSuccess(responseConsumer)
-                .withIndex(WEB_SOCKET_INDEX_NAME)
-                .build());
+            .builder()
+            .withBody(connection(connectionId))
+            .onHttpError(responseConsumer)
+            .onHttpSuccess(responseConsumer)
+            .withIndex(WEB_SOCKET_INDEX_NAME)
+            .build());
 
         return responseEvent(statusCode.get());
     }
@@ -183,23 +182,21 @@ public class WebSocketService {
         final AtomicBoolean status = new AtomicBoolean(true);
         Consumer<Response> responseConsumer = response -> {
             var sendStatus = response
-                    .getHits().getHits().stream()
-                    .map(hit -> hit.getSource().get("connectionId"))
-                    .filter(connectionId -> !Objects.equals(connectionId, senderConnectionId))
-                    .map(connectionId -> sendMessage(connectionId, body))
-                    .reduce(true, (partial, sendMessageStatus) -> partial && sendMessageStatus);
+                .getHits().getHits().stream()
+                .map(hit -> hit.getSource().get("connectionId"))
+                .filter(connectionId -> !Objects.equals(connectionId, senderConnectionId))
+                .map(connectionId -> sendMessage(connectionId, body))
+                .reduce(true, (partial, sendMessageStatus) -> partial && sendMessageStatus);
             status.set(status.get() && sendStatus);
         };
 
         elasticsearchService.searchAll(
-                SearchRequest
-                        .builder()
-                        .withSize(10)
-                        .withIndex(WEB_SOCKET_INDEX_NAME)
-                        .withScroll("1m")
-                        .build(),
-                responseConsumer,
-                null
+            SearchRequest.builder().withSize(10)
+                .withIndex(WEB_SOCKET_INDEX_NAME)
+                .withScroll("1m")
+                .build(),
+            responseConsumer,
+            null
         );
         return responseEvent(status.get() ? HTTP_OK_STATUS_CODE : HTTP_PARTIAL_CONTENT_STATUS_CODE);
     }
@@ -214,10 +211,10 @@ public class WebSocketService {
      */
     private boolean sendMessage(String toConnectionId, Object body) {
         var connectionRequest = PostToConnectionRequest
-                .builder()
-                .connectionId(toConnectionId)
-                .data(SdkBytes.fromUtf8String(body.toString()))
-                .build();
+            .builder()
+            .connectionId(toConnectionId)
+            .data(SdkBytes.fromUtf8String(body.toString()))
+            .build();
         try {
             apiGatewayManagementClient.postToConnection(connectionRequest);
         } catch (Exception ignored) {

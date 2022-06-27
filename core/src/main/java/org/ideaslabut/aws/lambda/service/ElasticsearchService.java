@@ -14,6 +14,7 @@ import org.ideaslabut.aws.lambda.domain.elasticsearch.request.IndexableBodyReque
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.Request;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.ScrollRequest;
 import org.ideaslabut.aws.lambda.domain.elasticsearch.request.SearchRequest;
+import org.ideaslabut.aws.lambda.domain.sneaky.NoArgConsumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -129,7 +130,7 @@ public class ElasticsearchService {
         }
     }
 
-    public void searchAll(SearchRequest searchRequest, Consumer<Response> responseConsumer, Consumer<Void> onComplete) {
+    public void searchAll(SearchRequest searchRequest, Consumer<Response> responseConsumer, NoArgConsumer onComplete) {
         if (searchRequest.getScroll() == null) {
             return;
         }
@@ -168,9 +169,8 @@ public class ElasticsearchService {
             }
             response = search.get();
         }
-        if (onComplete != null) {
-            onComplete.accept(null);
-        }
+
+        Optional.ofNullable(onComplete).ifPresent(NoArgConsumer::accept);
     }
 
     private <T extends Request> Optional<Response> send(HttpRequest httpRequest, T searchRequest) {

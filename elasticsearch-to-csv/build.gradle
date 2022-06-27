@@ -6,6 +6,8 @@ dependencies {
 
 task extractElasticsearchData(type: JavaExec) {
     standardOutput = System.out
+    environment "ELASTICSEARCH_AUTHENTICATION_KEY", "ZWxhc3RpYzpjaGFuZ2VtZQ=="
+    environment "ELASTICSEARCH_URL", "http://localhost:9200"
     mainClass = 'org.ideaslabut.aws.lambda.estocsv.ElasticsearchToCsv'
     classpath = sourceSets.main.runtimeClasspath
 }
