@@ -1,14 +1,17 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
 
 /**
- * An elasticsearch indexable body request
+ * An elasticsearch request to hold indexable body information
  *
  * @param <I> a type of index body holds by this request
+ *
+ * @author Prakash Khadka <br>
+ *     Created On: Jun 27, 2022
  */
 public abstract class IndexableBodyRequest<I extends IndexBody> extends Indexable {
     /**
@@ -45,6 +48,11 @@ public abstract class IndexableBodyRequest<I extends IndexBody> extends Indexabl
 
     private I body;
 
+    /**
+     * Creates a new instance of {@link IndexableBodyRequest}
+     *
+     * @param builder a indexable body request builder to create {@link IndexableBodyRequest}
+     */
     protected IndexableBodyRequest(Builder<I, ?, ?> builder) {
         super(builder);
         setBody(builder.body);

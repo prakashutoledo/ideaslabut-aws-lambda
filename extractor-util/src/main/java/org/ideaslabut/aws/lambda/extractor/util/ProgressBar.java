@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.extractor.util;
 
@@ -7,7 +7,149 @@ import java.io.PrintStream;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+/**
+ * A command line progress bar
+ *
+ * @author Prakash Khadka <br>
+ *         Created on: Jan 30, 2022
+ */
 public class ProgressBar {
+    private final int maxStep;
+    private final String delimiter;
+    private final PrintStream printStream;
+    private final String format;
+    private final StringBuilder delimiterBuilder;
+    private long totalElement;
+    private long startTime;
+    private long currentElementSize;
+    private boolean status;
+
+    /**
+     * Creates a new instance of {@link ProgressBar}
+     *
+     * @param builder a builder to set
+     */
+    private ProgressBar(Builder builder) {
+        this(builder.maxStep, builder.totalElement, builder.delimiter, builder.printStream, builder.prefix);
+    }
+
+    private ProgressBar(int maxStep, long totalElement, String delimiter, PrintStream printStream, String prefix) {
+        this.delimiter = delimiter;
+        this.printStream = Objects.requireNonNull(printStream, "Print stream should not be null");
+        this.maxStep = validateMaxStep(maxStep);
+        this.totalElement = validateTotalElement(totalElement);
+        this.format = "\r" + (prefix == null ? "" : prefix) + " [%-" + this.maxStep + "s]" + " [%" +
+            String.valueOf(totalElement).length() + "d/" +
+            totalElement + "] [%3d%%] [%s] [%s]";
+        this.delimiterBuilder = new StringBuilder();
+        this.currentElementSize = 0;
+        this.status = false;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private static String formattedMillis(long millis) {
+        int secondToMillis = 1000;
+        int minuteToMillis = secondToMillis * 60;
+        int hourToMillis = minuteToMillis * 60;
+
+        long hrs = millis / hourToMillis;
+        millis = millis % hourToMillis;
+        long minutes = millis / minuteToMillis;
+        millis = millis % minuteToMillis;
+        long seconds = millis / secondToMillis;
+        millis = millis % secondToMillis;
+
+        return String.format("%02d:%02d:%02d:%03d", hrs, minutes, seconds, millis);
+    }
+
+    private int validateMaxStep(int maxStep) {
+        if (maxStep > 0 && maxStep <= 100) {
+            return maxStep;
+        }
+
+        throw new IllegalArgumentException("Max step should be between 0 and 100 inclusive");
+    }
+
+    private long validateTotalElement(long totalElement) {
+        if (totalElement > 0) {
+            return totalElement;
+        }
+
+        throw new IllegalArgumentException("Total element should be positive number greater than 0");
+    }
+
+
+    public void initStartTime() {
+        this.startTime = System.currentTimeMillis();
+    }
+
+    public void initStartTime(long millis) {
+        this.startTime = millis;
+    }
+
+    public void updateBy(long element) {
+        if (element > totalElement) {
+            throw new IllegalArgumentException("Element cannot exceed total element number");
+        }
+        if (currentElementSize + element > totalElement) {
+            currentElementSize = totalElement;
+        } else {
+            currentElementSize += element;
+        }
+
+        update();
+    }
+
+    public void updateTo(long element) {
+        if (element > totalElement) {
+            element = totalElement;
+        }
+
+        currentElementSize = element;
+        update();
+    }
+
+    private void update() {
+        long endTime = System.currentTimeMillis();
+        int percentage = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
+        int remainingDelimiter = Long.valueOf((maxStep * currentElementSize) / totalElement - delimiterBuilder.length()).intValue();
+
+        if (remainingDelimiter > 0) {
+            IntStream.range(0, remainingDelimiter).mapToObj(i -> delimiter).forEach(delimiterBuilder::append);
+        }
+
+        var statusString = status ? "|" : "-";
+        if (currentElementSize >= totalElement) {
+            statusString = "done...";
+        }
+
+        printStream.printf(format, delimiterBuilder.toString(), currentElementSize, percentage, formattedMillis(endTime - startTime), statusString);
+        status = !status;
+    }
+
+    public int getMaxStep() {
+        return maxStep;
+    }
+
+    public long getTotalElement() {
+        return totalElement;
+    }
+
+    public void setTotalElement(long totalElement) {
+        this.totalElement = validateTotalElement(totalElement);
+    }
+
+    public String getDelimiter() {
+        return delimiter;
+    }
+
+    public PrintStream getPrintStream() {
+        return printStream;
+    }
+
     public static class Builder {
         private int maxStep;
         private long totalElement;
@@ -49,136 +191,5 @@ public class ProgressBar {
         public ProgressBar build() {
             return new ProgressBar(this);
         }
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    private final int maxStep;
-    private long totalElement;
-    private final String delimiter;
-    private final PrintStream printStream;
-    private final String format;
-    private final StringBuilder delimiterBuilder;
-    private long startTime;
-    private long currentElementSize;
-    private boolean status;
-
-    private ProgressBar(Builder builder) {
-        this(builder.maxStep, builder.totalElement, builder.delimiter, builder.printStream, builder.prefix);
-    }
-
-    private ProgressBar(int maxStep, long totalElement, String delimiter, PrintStream printStream, String prefix) {
-        this.delimiter = delimiter;
-        this.printStream = Objects.requireNonNull(printStream, "Print stream should not be null");
-        this.maxStep = validateMaxStep(maxStep);
-        this.totalElement = validateTotalElement(totalElement);
-        this.format = "\r" + (prefix == null ? "" : prefix) + " [%-" + this.maxStep + "s]" + " [%" +
-                String.valueOf(totalElement).length() + "d/" +
-                totalElement + "] [%3d%%] [%s] [%s]";
-        this.delimiterBuilder = new StringBuilder();
-        this.currentElementSize = 0;
-        this.status = false;
-    }
-
-    private int validateMaxStep(int maxStep) {
-        if (maxStep > 0 && maxStep <= 100) {
-            return maxStep;
-        }
-
-        throw new IllegalArgumentException("Max step should be between 0 and 100 inclusive");
-    }
-
-    private long validateTotalElement(long totalElement) {
-        if (totalElement > 0) {
-            return totalElement;
-        }
-
-        throw new IllegalArgumentException("Total element should be positive number greater than 0");
-    }
-
-
-    public void initStartTime() {
-        this.startTime = System.currentTimeMillis();
-    }
-
-    public void setTotalElement(long totalElement) {
-        this.totalElement = validateTotalElement(totalElement);
-    }
-
-    public void initStartTime(long millis) {
-        this.startTime = millis;
-    }
-
-    public void updateBy(long element) {
-        if (element > totalElement) {
-            throw new IllegalArgumentException("Element cannot exceed total element number");
-        }
-        if (currentElementSize + element > totalElement) {
-            currentElementSize = totalElement;
-        }
-        else {
-            currentElementSize += element;
-        }
-
-        update();
-    }
-
-    public void updateTo(long element) {
-        if (element > totalElement) {
-            element = totalElement;
-        }
-
-        currentElementSize = element;
-        update();
-    }
-
-    private void update() {
-        long endTime = System.currentTimeMillis();
-        int percentage = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
-        int remainingDelimiter = Long.valueOf((maxStep * currentElementSize) / totalElement - delimiterBuilder.length()).intValue();
-
-        if (remainingDelimiter > 0) {
-            IntStream.range(0, remainingDelimiter).mapToObj(i -> "#").forEach(delimiterBuilder::append);
-        }
-
-        var statusString = status ? "|" : "-";
-        if (currentElementSize >= totalElement) {
-            statusString = "done...";
-        }
-        printStream.printf(format, delimiterBuilder.toString(), currentElementSize, percentage, formattedMillis(endTime - startTime), statusString);
-        status = !status;
-    }
-
-    private static String formattedMillis(long millis) {
-        int secondToMillis = 1000;
-        int minuteToMillis = secondToMillis * 60;
-        int hourToMillis = minuteToMillis * 60;
-
-        long hrs = millis / hourToMillis;
-        millis = millis % hourToMillis;
-        long minutes = millis / minuteToMillis;
-        millis = millis % minuteToMillis;
-        long seconds = millis / secondToMillis;
-        millis = millis % secondToMillis;
-
-        return String.format("%02d:%02d:%02d:%03d", hrs, minutes, seconds, millis);
-    }
-
-    public int getMaxStep() {
-        return maxStep;
-    }
-
-    public long getTotalElement() {
-        return totalElement;
-    }
-
-    public String getDelimiter() {
-        return delimiter;
-    }
-
-    public PrintStream getPrintStream() {
-        return printStream;
     }
 }

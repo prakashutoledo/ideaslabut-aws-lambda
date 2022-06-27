@@ -1,7 +1,9 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.sneaky;
+
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -29,6 +31,7 @@ public interface UncheckedIOFunction<T, R, E extends IOException> {
      * @return a function without any checked exception
      */
     static <T, R> Function<T, R> wrap(UncheckedIOFunction<T, R, ? super IOException> uncheckedIOFunction) {
+        requireNonNull(uncheckedIOFunction, "Function cannot be null");
         return value -> {
             try {
                 return uncheckedIOFunction.apply(value);
@@ -43,8 +46,9 @@ public interface UncheckedIOFunction<T, R, E extends IOException> {
      * i.e. value = f(x);
      *
      * @param input a input to the function
+     *
      * @return a result from the operation
-     * 
+     *
      * @throws E {@link IOException} if any occurs
      */
     R apply(T input) throws E;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.service;
 
@@ -45,14 +45,6 @@ public class WebSocketService {
 
     private static volatile WebSocketService INSTANCE = null;
 
-    private final ApiGatewayManagementApiClient apiGatewayManagementClient;
-    private final ElasticsearchService elasticsearchService;
-
-    private WebSocketService(ApiGatewayManagementApiClient apiGatewayManagementClient, ElasticsearchService elasticsearchService) {
-        this.elasticsearchService = elasticsearchService;
-        this.apiGatewayManagementClient = apiGatewayManagementClient;
-    }
-
     /**
      * A threadsafe singleton instance for WebSocketService
      *
@@ -76,6 +68,13 @@ public class WebSocketService {
             .endpointOverride(URI.create(System.getenv(WEBSOCKET_MANAGEMENT_URL)))
             .build();
         return new WebSocketService(apiGatewayManagementClient, ElasticsearchService.getInstance());
+    }
+    private final ApiGatewayManagementApiClient apiGatewayManagementClient;
+    private final ElasticsearchService elasticsearchService;
+
+    private WebSocketService(ApiGatewayManagementApiClient apiGatewayManagementClient, ElasticsearchService elasticsearchService) {
+        this.elasticsearchService = elasticsearchService;
+        this.apiGatewayManagementClient = apiGatewayManagementClient;
     }
 
     /**

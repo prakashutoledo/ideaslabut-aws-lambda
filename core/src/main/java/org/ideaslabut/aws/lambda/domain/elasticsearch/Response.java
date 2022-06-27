@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
@@ -11,7 +11,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  * Class that mimics Elasticsearch search api response with hits value only
  *
  * @author Prakash Khadka <br>
- *         Created on: Jan 30, 2022
+ *     Created on: Jan 30, 2022
  */
 public class Response {
     @JsonAlias("_scroll_id")

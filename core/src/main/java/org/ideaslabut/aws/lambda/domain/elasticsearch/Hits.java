@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch;
 
@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import java.util.List;
 
 /**
- * Elasticsearch hits holding webSocket hits value
+ * A pojo representing Elasticsearch response json hits node
  *
  * @author Prakash Khadka <br>
  *         Created on: Jan 30, 2022

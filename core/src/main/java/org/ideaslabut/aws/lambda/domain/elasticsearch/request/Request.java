@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
@@ -10,7 +10,7 @@ import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
 /**
- * A base abstract class represented as an Elasticsearch request
+ * A base request represented as an Elasticsearch request
  *
  * @author Prakash Khadka <br>
  *     Created On: Jun 27, 2022

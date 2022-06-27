@@ -1,11 +1,12 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.sneaky;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 
 /**
  * A no argument consumer with checked io exception
@@ -26,7 +27,7 @@ public interface NoArgUncheckedIOConsumer<E extends IOException> {
      * @return a wrapped consumer
      */
     static NoArgConsumer wrap(NoArgUncheckedIOConsumer<? super IOException> noArgConsumer) {
-        Objects.requireNonNull(noArgConsumer, "Consumer cannot be null");
+        requireNonNull(noArgConsumer, "Consumer cannot be null");
         return () -> {
             try {
                 noArgConsumer.accept();
@@ -41,5 +42,5 @@ public interface NoArgUncheckedIOConsumer<E extends IOException> {
      *
      * @throws E An exception of type {@link IOException}
      */
-    void accept() throws E;
+    void accept() throws IOException;
 }

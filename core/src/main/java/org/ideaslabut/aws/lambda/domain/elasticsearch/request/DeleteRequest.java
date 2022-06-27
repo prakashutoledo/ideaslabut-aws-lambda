@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
 
 /**
- * Elasticsearch delete index request
+ * Elasticsearch delete document from index api request
  *
  * @param <I> A type of body hold by this request
  *
@@ -15,7 +15,7 @@ import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
  */
 public class DeleteRequest<I extends IndexBody> extends IndexableBodyRequest<I> {
     /**
-     * Elasticsearch delete index request builder
+     * Elasticsearch delete request builder
      *
      * @param <I> a type of body holds by this builder
      */
@@ -33,7 +33,7 @@ public class DeleteRequest<I extends IndexBody> extends IndexableBodyRequest<I> 
     }
 
     /**
-     * Creates a new instance of elasticsearch delete index request {@link Builder}
+     * Creates a new instance of elasticsearch delete document from index request {@link Builder}
      *
      * @param <I> a type of body holds by this builder
      *
@@ -44,9 +44,9 @@ public class DeleteRequest<I extends IndexBody> extends IndexableBodyRequest<I> 
     }
 
     /**
-     * Creates a new instance of elasticsearch delete index request
+     * Creates a new instance of {@link DeleteRequest}
      *
-     * @param builder a newly created elasticsearch index {@link DeleteRequest}
+     * @param builder a delete request builder to create {@link DeleteRequest}
      */
     private DeleteRequest(Builder<I> builder) {
         super(builder);

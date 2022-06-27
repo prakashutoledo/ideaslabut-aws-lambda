@@ -37,7 +37,6 @@ public class WebSocketMessageHandlerTest {
     @Test
     void handleRequest() {
         try(var mockedWebSocketService = mockStatic(WebSocketService.class)) {
-
             var webSocketRequestContext = new RequestContext();
             webSocketRequestContext.setConnectionId("fake-id");
             webSocketRequestContext.setRouteKey("fake-route-key");

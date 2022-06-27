@@ -1,11 +1,12 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.sneaky;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -29,7 +30,7 @@ public interface UncheckedIOConsumer<T, E extends IOException> {
      * @return A wrapped consumer throwing unchecked io exception
      */
     static <T> Consumer<T> wrap(final UncheckedIOConsumer<T, ? super IOException> uncheckedIOConsumer) {
-        Objects.requireNonNull(uncheckedIOConsumer, "Consumer shouldn't be null");
+        requireNonNull(uncheckedIOConsumer, "Consumer shouldn't be null");
         return value -> {
             try {
                 uncheckedIOConsumer.accept(value);

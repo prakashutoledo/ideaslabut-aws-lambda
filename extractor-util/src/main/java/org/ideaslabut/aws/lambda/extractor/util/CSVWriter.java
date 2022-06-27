@@ -18,10 +18,17 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A writer that can write data in CSV format
+ *
+ * @author Prakash Khadka <br>
+ *     Created on: Jan 30, 2022
+ */
 public class CSVWriter implements AutoCloseable, Flushable {
     private static final char UTF8_BOM = '\ufeff';
     private static final String DEFAULT_WRITER_DIRECTORY = "build/elasticsearch";
@@ -31,14 +38,16 @@ public class CSVWriter implements AutoCloseable, Flushable {
     private final Writer printWriter;
     private Set<String> headers;
 
-    private CSVWriter(String delimiter, Writer printWriter, Set<String> headers) {
-        this.delimiter = delimiter;
+    /**
+     * Creates a new instance of {@link CSVWriter}
+     *
+     * @param builder a builder to use to build this instance
+     * @param printWriter a print writer to set
+     */
+    private CSVWriter(Builder builder, Writer printWriter) {
+        this.delimiter = builder.delimiter;
+        this.headers = builder.headers;
         this.printWriter = printWriter;
-        this.headers = headers;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     public void writeHeaders(Set<String> headers) {
@@ -59,8 +68,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         if (headers.isEmpty()) {
-            var headers = properties.get(0);
-            writeHeaders(headers.keySet());
+            writeHeaders(properties.get(0).keySet());
         }
 
         properties.stream()
@@ -103,6 +111,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
         private Builder() {
             this.delimiter = ",";
             this.fileName = "temp";
+            this.headers = new HashSet<>();
         }
 
         public Builder withFileName(String fileName) {
@@ -116,6 +125,10 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         public Builder withHeaders(Set<String> headers) {
+            if (headers == null || headers.isEmpty()) {
+                throw new IllegalArgumentException("Empty headers provided");
+            }
+
             this.headers = headers;
             return this;
         }
@@ -137,7 +150,16 @@ public class CSVWriter implements AutoCloseable, Flushable {
                     WRITE
                 );
             });
-            return new CSVWriter(delimiter, bufferedWriterFactory.apply(fileName), headers);
+            return new CSVWriter(this, bufferedWriterFactory.apply(fileName));
         }
+    }
+
+    /**
+     * Creates a new instance of {@link CSVWriter} builder
+     *
+     * @return a newly created builder
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 }

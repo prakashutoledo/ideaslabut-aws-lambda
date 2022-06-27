@@ -1,17 +1,17 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
 /**
- * An elasticsearch search api request
+ * An elasticsearch search document from index api request
  *
  * @author Prakash Khadka <br>
  *     Created On: Jun 27, 2022
  */
 public class SearchRequest extends Scrollable {
     /**
-     * An elasticsearch search api request builder
+     * A builder for {@link SearchRequest}
      */
     public static class Builder extends Scrollable.Builder<SearchRequest, Builder> {
         private long size;
@@ -59,7 +59,7 @@ public class SearchRequest extends Scrollable {
     private long size;
 
     /**
-     * Creates a new instance of elasticsearch search request
+     * Creates a new instance of {@link SearchRequest}
      *
      * @param builder an elasticsearch search request builder to use
      */

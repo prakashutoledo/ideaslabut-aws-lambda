@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.service;
 
@@ -50,20 +50,6 @@ public class ElasticsearchService {
 
     private static volatile ElasticsearchService INSTANCE = null;
 
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
-
-    /**
-     * Creates a new instance of {@link ElasticsearchService}
-     *
-     * @param httpClient a http client to set
-     * @param objectMapper an object mapper to set
-     */
-    private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
-        this.httpClient = Objects.requireNonNull(httpClient);
-        this.objectMapper = objectMapper;
-    }
-
     /**
      * Gets the thread safe singleton instance of {@link ElasticsearchService}
      *
@@ -91,10 +77,25 @@ public class ElasticsearchService {
         return new ElasticsearchService(httpClient, objectMapper);
     }
 
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * Creates a new instance of {@link ElasticsearchService}
+     *
+     * @param httpClient a http client to set
+     * @param objectMapper an object mapper to set
+     */
+    private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
+        this.httpClient = Objects.requireNonNull(httpClient);
+        this.objectMapper = objectMapper;
+    }
+
     /**
      * Performs an elasticsearch search request for given request details <br>
-     *
+     * <p>
      * api path : {@code  GET {indexName}/_search?size={size}&scroll={scrollTime}}
+     *
      * @param searchRequest an elasticsearch search request to use
      *
      * @return an optional elasticsearch response
@@ -110,7 +111,7 @@ public class ElasticsearchService {
 
     /**
      * Performs an elasticsearch scroll request for given scroll request details <br>
-     *
+     * <p>
      * api path : {@code  GET _search/scroll?scroll={scrollValue}} with request body {"_scroll_id": ""}
      *
      * @param scrollRequest a scroll request to use
@@ -223,7 +224,7 @@ public class ElasticsearchService {
      * Send the given http request using underlying http client.
      * This will not throw any exception rather it will catch any underlying exception and notify
      * the sender by using exception consumer.
-     *
+     * <p>
      * If http client response is bad then it will notify the sender by using error consumer. If http client
      * response doesn't have any body but the request is successful, it will return empty elasticsearch response.
      * For any successful request it will use success consumer to notify sender that underlying http call was a success

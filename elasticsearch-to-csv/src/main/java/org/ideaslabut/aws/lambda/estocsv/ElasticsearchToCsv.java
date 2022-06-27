@@ -65,7 +65,8 @@ public class ElasticsearchToCsv {
             .withDelimiter("#")
             .withPrefix("Downloading: " + indexName)
             .withTotalElement(totalElementSearchRequest.get().getHits().getTotal().getValue())
-            .withMaxStep(100).build();
+            .withMaxStep(100)
+            .build();
 
         progressBar.initStartTime(startTime);
 
