@@ -44,6 +44,7 @@ public class WebSocketService {
     private static final String WEB_SOCKET_INDEX_NAME = "socket";
 
     private static volatile WebSocketService INSTANCE = null;
+
     private final ApiGatewayManagementApiClient apiGatewayManagementClient;
     private final ElasticsearchService elasticsearchService;
 
@@ -92,11 +93,20 @@ public class WebSocketService {
      */
     public ProxyResponseEvent processEvent(ProxyRequestEvent proxyRequestEvent) {
         if (proxyRequestEvent == null || proxyRequestEvent.getRequestContext() == null) {
+            LOGGER.error("Unable to process event");
             return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
         var domainName = proxyRequestEvent.getRequestContext().getDomainName();
-        if (domainName == null || !System.getenv(WEBSOCKET_MANAGEMENT_URL).contains(domainName)) {
+        if (domainName == null) {
+            LOGGER.error("Domain name is null for event {}", proxyRequestEvent);
+            return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
+        }
+        if (!System.getenv(WEBSOCKET_MANAGEMENT_URL).contains(domainName)) {
+            LOGGER.error("Request domain name {} doesn't match with environment variable {}",
+                domainName,
+                System.getenv(WEBSOCKET_MANAGEMENT_URL)
+            );
             return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
@@ -104,6 +114,7 @@ public class WebSocketService {
         var routeKey = RouteKey.fromAction(proxyRequestEvent.getRequestContext().getRouteKey());
 
         if (routeKey.isEmpty()) {
+            LOGGER.error("Route key: {} is not a valid route key", proxyRequestEvent.getRequestContext().getRouteKey());
             return responseEvent(HTTP_BAD_RESPONSE_STATUS_CODE);
         }
 
@@ -128,10 +139,7 @@ public class WebSocketService {
      */
     private ProxyResponseEvent addConnection(String connectionId) {
         final AtomicInteger statusCode = new AtomicInteger();
-        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> {
-            LOGGER.info("Create response {} with status {}", httpResponse.body(), httpResponse.statusCode());
-            statusCode.set(httpResponse.statusCode());
-        };
+        Consumer<HttpResponse<String>> responseConsumer = httpResponse -> statusCode.set(httpResponse.statusCode());
 
         elasticsearchService.create(CreateRequest
             .builder().withIndex(WEB_SOCKET_INDEX_NAME)
@@ -210,18 +218,29 @@ public class WebSocketService {
      *
      * @return <code>true</code> if successful otherwise <code>false</code>
      */
-    private boolean sendMessage(String toConnectionId, Object body) {
+    private boolean sendMessage(final String toConnectionId, Object body) {
         var connectionRequest = PostToConnectionRequest
             .builder()
             .connectionId(toConnectionId)
             .data(SdkBytes.fromUtf8String(body.toString()))
             .build();
+
         try {
-            apiGatewayManagementClient.postToConnection(connectionRequest);
-        } catch (Exception ignored) {
+            var sdkResponse = apiGatewayManagementClient.postToConnection(connectionRequest).sdkHttpResponse();
+            if (sdkResponse == null) {
+                return false;
+            }
+            sdkResponse.statusText().ifPresent(statusText ->
+                LOGGER.debug("Post to connection status text for connectionId {} is {}",
+                    toConnectionId,
+                    statusText
+                )
+            );
+            return sdkResponse.isSuccessful();
+        } catch (Exception exception) {
+            LOGGER.error("Unable to send message to {} with exception", toConnectionId, exception);
             return false;
         }
-        return true;
     }
 
     /**

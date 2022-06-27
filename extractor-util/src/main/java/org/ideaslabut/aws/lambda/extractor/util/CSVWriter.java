@@ -121,7 +121,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
         }
 
         public CSVWriter build() {
-            var printWriterFactory = UncheckedIOFunction.wrap((String fileName) -> {
+            var bufferedWriterFactory = UncheckedIOFunction.wrap((String fileName) -> {
                 Files.createDirectories(Path.of(DEFAULT_WRITER_DIRECTORY));
                 return Files.newBufferedWriter(
                     Path.of(
@@ -137,7 +137,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
                     WRITE
                 );
             });
-            return new CSVWriter(delimiter, printWriterFactory.apply(fileName), headers);
+            return new CSVWriter(delimiter, bufferedWriterFactory.apply(fileName), headers);
         }
     }
 }
