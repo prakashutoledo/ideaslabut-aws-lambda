@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
@@ -36,7 +36,7 @@ public abstract class Request {
         }
 
         /**
-         * Sets the exception consumer for this request
+         * Sets the exception consumer for this request {@link B}
          *
          * @param exceptionConsumer a consumer which handles exception for the request
          *
@@ -48,7 +48,7 @@ public abstract class Request {
         }
 
         /**
-         * Sets the error consumer for this request builder
+         * Sets the error consumer for this request builder {@link B}
          *
          * @param errorConsumer a consumer which handles error on performed request
          *
@@ -60,7 +60,7 @@ public abstract class Request {
         }
 
         /**
-         * Sets the success consumer for this request builder
+         * Sets the success consumer for this request builder {@link B}
          *
          * @param successConsumer a consumer which handles success on performed request
          *

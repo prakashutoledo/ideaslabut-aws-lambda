@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.service;
 
@@ -69,6 +69,7 @@ public class WebSocketService {
             .build();
         return new WebSocketService(apiGatewayManagementClient, ElasticsearchService.getInstance());
     }
+
     private final ApiGatewayManagementApiClient apiGatewayManagementClient;
     private final ElasticsearchService elasticsearchService;
 
@@ -229,6 +230,7 @@ public class WebSocketService {
             if (sdkResponse == null) {
                 return false;
             }
+
             sdkResponse.statusText().ifPresent(statusText ->
                 LOGGER.debug("Post to connection status text for connectionId {} is {}",
                     toConnectionId,
@@ -236,7 +238,8 @@ public class WebSocketService {
                 )
             );
             return sdkResponse.isSuccessful();
-        } catch (Exception exception) {
+        }
+        catch (Exception exception) {
             LOGGER.error("Unable to send message to {} with exception", toConnectionId, exception);
             return false;
         }

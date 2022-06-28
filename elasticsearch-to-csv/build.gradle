@@ -1,7 +1,7 @@
 dependencies {
     implementation project(':core')
     implementation project(':extractor-util')
-    implementation 'org.slf4j:slf4j-nop'
+    runtimeOnly 'org.slf4j:slf4j-nop'
 }
 
 task extractElasticsearchData(type: JavaExec) {

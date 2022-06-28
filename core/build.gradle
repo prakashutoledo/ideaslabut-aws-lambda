@@ -13,7 +13,7 @@ dependencies {
     api 'org.apache.commons:commons-lang3'
     api 'org.slf4j:slf4j-api'
 
-    testImplementation 'org.slf4j:slf4j-nop'
+    testRuntimeOnly 'org.slf4j:slf4j-nop'
 }
 
 jar {

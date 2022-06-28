@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.service;
 
@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * Service class as elasticsearch client
+ * Service class as elasticsearch rest client
  *
  * @author Prakash Khadka <br>
  *     Created on: Jan 30, 2022
@@ -240,11 +240,19 @@ public class ElasticsearchService {
             var response = httpClient.send(httpRequest, BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
                 LOGGER.error("Request with {} failed due to status code {}", elasticsearchRequest, response.statusCode());
-                Optional.ofNullable(elasticsearchRequest.getErrorConsumer()).ifPresent(consumer -> consumer.accept(response));
+
+                var errorConsumer = elasticsearchRequest.getErrorConsumer();
+
+                if (errorConsumer != null) {
+                    errorConsumer.accept(response);
+                }
                 return Optional.empty();
             }
 
-            Optional.ofNullable(elasticsearchRequest.getSuccessConsumer()).ifPresent(consumer -> consumer.accept(response));
+            var successConsumer = elasticsearchRequest.getSuccessConsumer();
+            if (successConsumer != null) {
+                successConsumer.accept(response);
+            }
 
             LOGGER.debug("Successfully processed request {} with status code {}", elasticsearchRequest, response.statusCode());
 
@@ -254,9 +262,15 @@ public class ElasticsearchService {
 
             return Optional.empty();
 
-        } catch (IOException | InterruptedException exception) {
+        }
+        catch (IOException | InterruptedException exception) {
             LOGGER.error("Unable to perform request for {} because of {}", elasticsearchRequest, exception);
-            Optional.ofNullable(elasticsearchRequest.getExceptionConsumer()).ifPresent(consumer -> consumer.accept(exception));
+
+            var exceptionConsumer = elasticsearchRequest.getExceptionConsumer();
+            if (exceptionConsumer != null) {
+                exceptionConsumer.accept(exception);
+            }
+
             return Optional.empty();
         }
     }
@@ -272,13 +286,12 @@ public class ElasticsearchService {
      * @return a newly created http request
      */
     private <T> HttpRequest httpRequest(String method, T body, String apiPath) {
-        String jsonBody;
         try {
-            jsonBody = objectMapper.writeValueAsString(body);
-        } catch (JsonProcessingException ignored) {
-            jsonBody = null;
+            return httpRequest(method, objectMapper.writeValueAsString(body), apiPath);
         }
-        return httpRequest(method, jsonBody, apiPath);
+        catch (JsonProcessingException ignored) {
+            return httpRequest(method, null, apiPath);
+        }
     }
 
     /**

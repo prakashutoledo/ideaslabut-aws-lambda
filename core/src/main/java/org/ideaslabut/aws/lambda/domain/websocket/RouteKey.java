@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ University of Toledo.. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.domain.websocket;
 
@@ -31,6 +31,7 @@ public enum RouteKey {
     public static Optional<RouteKey> fromAction(String action) {
         return Optional.ofNullable(ACTION_ROUTE_KEY_MAP.get(action));
     }
+
     private final String action;
 
     RouteKey(String action) {

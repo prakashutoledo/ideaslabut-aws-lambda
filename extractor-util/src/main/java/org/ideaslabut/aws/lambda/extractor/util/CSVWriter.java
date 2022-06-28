@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A writer that can write data in CSV format
+ * A writer that can write data in UTF-8 encoding CSV format
  *
  * @author Prakash Khadka <br>
  *     Created on: Jan 30, 2022
@@ -34,96 +34,54 @@ public class CSVWriter implements AutoCloseable, Flushable {
     private static final String DEFAULT_WRITER_DIRECTORY = "build/elasticsearch";
     private static final String CSV_EXTENSION = "csv";
 
-    private final String delimiter;
-    private final Writer printWriter;
-    private Set<String> headers;
-
     /**
-     * Creates a new instance of {@link CSVWriter}
-     *
-     * @param builder a builder to use to build this instance
-     * @param printWriter a print writer to set
+     * A builder for {@link CSVWriter}
      */
-    private CSVWriter(Builder builder, Writer printWriter) {
-        this.delimiter = builder.delimiter;
-        this.headers = builder.headers;
-        this.printWriter = printWriter;
-    }
-
-    public void writeHeaders(Set<String> headers) {
-        if (headers == null || headers.isEmpty()) {
-            throw new IllegalArgumentException("Empty headers provided");
-        }
-        this.headers = headers;
-        writeHeaders();
-    }
-
-    public void write(Map<String, String> property) {
-        writeProperties(List.of(property));
-    }
-
-    public void writeProperties(List<Map<String, String>> properties) {
-        if (properties == null || properties.isEmpty()) {
-            throw new IllegalArgumentException("Empty properties provided");
-        }
-
-        if (headers.isEmpty()) {
-            writeHeaders(properties.get(0).keySet());
-        }
-
-        properties.stream()
-            .map(map -> headers.stream().map(map::get).collect(joining(delimiter)))
-            .forEach(this::writeLine);
-    }
-
-    private void writeHeaders() {
-        write(String.valueOf(UTF8_BOM));
-        writeLine(String.join(delimiter, headers));
-    }
-
-    private void write(String value) {
-        try {
-            printWriter.write(value);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-    }
-
-    private void writeLine(String value) {
-        write(value + System.lineSeparator());
-    }
-
-    @Override
-    public void flush() throws IOException {
-        printWriter.flush();
-    }
-
-    @Override
-    public void close() throws IOException {
-        printWriter.close();
-    }
-
     public static class Builder {
         private String fileName;
         private String delimiter;
         private Set<String> headers;
 
+        /**
+         * Creates a new instance of csv writer {@link Builder}
+         */
         private Builder() {
             this.delimiter = ",";
             this.fileName = "temp";
             this.headers = new HashSet<>();
         }
 
+        /**
+         * Sets the file name for this csv writer builder
+         *
+         * @param fileName a file name to set
+         *
+         * @return a reference to this csv writer builder
+         */
         public Builder withFileName(String fileName) {
             this.fileName = requireNonNull(fileName);
             return this;
         }
 
+        /**
+         * Sets the default delimiter for thus csv writer builder
+         *
+         * @param delimiter a default delimiter to set
+         *
+         * @return a reference to this csv writer builder
+         */
         public Builder withDelimiter(String delimiter) {
             this.delimiter = delimiter;
             return this;
         }
 
+        /**
+         * Sets the csv headers for this csv writer builder
+         *
+         * @param headers a csv headers to set
+         *
+         * @return a reference to this csv writer builder
+         */
         public Builder withHeaders(Set<String> headers) {
             if (headers == null || headers.isEmpty()) {
                 throw new IllegalArgumentException("Empty headers provided");
@@ -133,6 +91,14 @@ public class CSVWriter implements AutoCloseable, Flushable {
             return this;
         }
 
+        /**
+         * Builds the new {@link CSVWriter}
+         * <p>
+         * This will also truncate or recreate the file name provided in this builder and opens that file
+         * to print writer as csv writer
+         *
+         * @return a newly created csv writer
+         */
         public CSVWriter build() {
             var bufferedWriterFactory = UncheckedIOFunction.wrap((String fileName) -> {
                 Files.createDirectories(Path.of(DEFAULT_WRITER_DIRECTORY));
@@ -161,5 +127,124 @@ public class CSVWriter implements AutoCloseable, Flushable {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    private final String delimiter;
+    private final Writer printWriter;
+    private Set<String> headers;
+
+    /**
+     * Creates a new instance of {@link CSVWriter}
+     *
+     * @param builder a builder to use to build this instance
+     * @param printWriter a print writer to set
+     */
+    private CSVWriter(Builder builder, Writer printWriter) {
+        this.delimiter = builder.delimiter;
+        this.headers = builder.headers;
+        this.printWriter = printWriter;
+    }
+
+    /**
+     * Write the given set of csv headers if it is not empty or not null
+     *
+     * @param headers a set of csv headers
+     *
+     * @throws IllegalArgumentException if given headers is null or empty
+     */
+    public void writeHeaders(Set<String> headers) {
+        if (headers == null || headers.isEmpty()) {
+            throw new IllegalArgumentException("Empty headers provided");
+        }
+        this.headers = headers;
+        writeHeaders();
+    }
+
+    /**
+     * Writes the given property map with csv value mapped with csv headers
+     *
+     * @param property a property map with value mapped into csv headers as key
+     */
+    public void write(Map<String, String> property) {
+        writeProperties(List.of(property));
+    }
+
+    /**
+     * Writes the given list of property map with csv value mapped with csv headers as key
+     * If no headers are set for this csv writer it will write the headers from the key set
+     * generated by first element from property map assuming that all list as same set of keys
+     * <p>
+     * It is the callers responsibility to make sure that same sets of keys are used as csv property map
+     *
+     * @param properties a list property map with value mapped into csv headers as key
+     */
+    public void writeProperties(List<Map<String, String>> properties) {
+        if (properties == null || properties.isEmpty()) {
+            throw new IllegalArgumentException("Empty properties provided");
+        }
+
+        if (headers.isEmpty()) {
+            writeHeaders(properties.get(0).keySet());
+        }
+
+        properties.stream()
+            .map(map -> headers.stream().map(map::get).collect(joining(delimiter)))
+            .forEach(this::writeLine);
+    }
+
+    /**
+     * Write csv headers line with the default delimiter with UTF-8 bom
+     */
+    private void writeHeaders() {
+        write(String.valueOf(UTF8_BOM));
+        writeLine(String.join(delimiter, headers));
+    }
+
+    /**
+     * Writes the given value to the underlying print writer as csv row
+     * This will not validate if the given value is valid csv row assuming that it is valid
+     * It is always the caller responsibility to pass the valid csv row
+     *
+     * @param value a value to write
+     *
+     * @throws UncheckedIOException a wrapper around checked {@link IOException} if any
+     */
+    private void write(String value) {
+        try {
+            printWriter.write(value);
+        }
+        catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
+    }
+
+    /**
+     * Writes the given value (concatenating with extra line separator) as csv row to underlying print writer
+     * assuming that given value is valid csv row. It is always the caller responsibility to pass valid csv row
+     *
+     * @param value a csv value to write
+     */
+    private void writeLine(String value) {
+        write(value + System.lineSeparator());
+    }
+
+    /**
+     * Flushes the underlining print writer
+     *
+     * @throws IOException if any
+     */
+    @Override
+    public void flush() throws IOException {
+        printWriter.flush();
+    }
+
+    /**
+     * Closes the underlying csv print writer
+     *
+     * @throws IOException if any
+     */
+    @Override
+    public void close() throws IOException {
+        printWriter.close();
     }
 }

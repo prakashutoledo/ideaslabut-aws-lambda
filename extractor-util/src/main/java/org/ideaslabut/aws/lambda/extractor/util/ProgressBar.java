@@ -3,26 +3,164 @@
  */
 package org.ideaslabut.aws.lambda.extractor.util;
 
+import static java.lang.System.currentTimeMillis;
+import static org.ideaslabut.aws.lambda.extractor.util.FormatterUtil.formattedMillis;
+
 import java.io.PrintStream;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
 /**
  * A command line progress bar
  *
  * @author Prakash Khadka <br>
- *         Created on: Jan 30, 2022
+ *     Created on: Jan 30, 2022
  */
 public class ProgressBar {
+    private static final String STATUS_PIPE = "|";
+    private static final String STATUS_MINUS = "-";
+    private static final String STATUS_DONE = "done...";
+
+    /**
+     * A builder for {@link ProgressBar}
+     */
+    public static class Builder {
+        private int maxStep;
+        private long totalElement;
+        private String delimiter;
+        private PrintStream printStream;
+        private String prefix;
+
+        /**
+         * Creates a new instance of progress bar {@link Builder}
+         */
+        private Builder() {
+            this.printStream = System.out;
+            this.delimiter = "#";
+            this.maxStep = 25;
+        }
+
+        /**
+         * A max step to set for this builder
+         *
+         * @param maxStep a max step to set
+         *
+         * @return a reference of this builder
+         */
+        public Builder withMaxStep(int maxStep) {
+            this.maxStep = validateMaxStep(maxStep);
+            return this;
+        }
+
+        /**
+         * A total element to set for this builder
+         *
+         * @param totalElement a total element to set
+         *
+         * @return a reference of this builder
+         */
+        public Builder withTotalElement(long totalElement) {
+            this.totalElement = validateTotalElement(totalElement);
+            return this;
+        }
+
+        /**
+         * A delimiter to set for this builder
+         *
+         * @param delimiter a delimiter to set
+         *
+         * @return a reference to this builder
+         */
+        public Builder withDelimiter(String delimiter) {
+            this.delimiter = Objects.requireNonNull(delimiter);
+            return this;
+        }
+
+        /**
+         * A print stream to set for this builder
+         *
+         * @param printStream a print stream to set
+         *
+         * @return a reference to this builder
+         */
+        public Builder withPrintStream(PrintStream printStream) {
+            this.printStream = Objects.requireNonNull(printStream);
+            return this;
+        }
+
+        /**
+         * A prefix to set for this progress builder
+         *
+         * @param prefix a prefix to set
+         *
+         * @return a reference to this builder
+         */
+        public Builder withPrefix(String prefix) {
+            this.prefix = prefix == null ? "" : prefix;
+            return this;
+        }
+
+        /**
+         * Builds a new progress bar from this builder
+         *
+         * @return a newly created progress bar
+         */
+        public ProgressBar build() {
+            return new ProgressBar(this);
+        }
+
+        /**
+         * Validates given max step and returns if it is valid
+         *
+         * @param maxStep a max step to validates
+         *
+         * @return a validated max step
+         *
+         * @throws IllegalArgumentException if max step is negative or greater than 100
+         */
+        private int validateMaxStep(int maxStep) {
+            if (maxStep > 0 && maxStep <= 100) {
+                return maxStep;
+            }
+
+            throw new IllegalArgumentException("Max step should be between 0 and 100 inclusive");
+        }
+
+        /**
+         * Validates given total element and returns if it is valid
+         *
+         * @param totalElement a total element to be validated
+         *
+         * @return a validated total element
+         *
+         * @throws IllegalArgumentException if total element is negative or zero
+         */
+        private long validateTotalElement(long totalElement) {
+            if (totalElement > 0) {
+                return totalElement;
+            }
+
+            throw new IllegalArgumentException("Total element should be positive number greater than 0");
+        }
+    }
+
+    /**
+     * Creates a new builder for {@link ProgressBar}
+     *
+     * @return a newly created builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     private final int maxStep;
     private final String delimiter;
     private final PrintStream printStream;
     private final String format;
     private final StringBuilder delimiterBuilder;
-    private long totalElement;
+    private final long totalElement;
     private long startTime;
     private long currentElementSize;
-    private boolean status;
+    private String status;
 
     /**
      * Creates a new instance of {@link ProgressBar}
@@ -30,79 +168,50 @@ public class ProgressBar {
      * @param builder a builder to set
      */
     private ProgressBar(Builder builder) {
-        this(builder.maxStep, builder.totalElement, builder.delimiter, builder.printStream, builder.prefix);
-    }
-
-    private ProgressBar(int maxStep, long totalElement, String delimiter, PrintStream printStream, String prefix) {
-        this.delimiter = delimiter;
-        this.printStream = Objects.requireNonNull(printStream, "Print stream should not be null");
-        this.maxStep = validateMaxStep(maxStep);
-        this.totalElement = validateTotalElement(totalElement);
-        this.format = "\r" + (prefix == null ? "" : prefix) + " [%-" + this.maxStep + "s]" + " [%" +
-            String.valueOf(totalElement).length() + "d/" +
-            totalElement + "] [%3d%%] [%s] [%s]";
+        this.delimiter = builder.delimiter;
+        this.printStream = builder.printStream;
+        this.maxStep = builder.maxStep;
+        this.totalElement = builder.totalElement;
+        this.format = "\r" + builder.prefix + " [%-" + this.maxStep + "s]" + " [%" +
+            String.valueOf(totalElement).length() + "d/" + totalElement + "] [%3d%%] [%s] [%s]";
         this.delimiterBuilder = new StringBuilder();
         this.currentElementSize = 0;
-        this.status = false;
+        this.status = STATUS_PIPE;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    private static String formattedMillis(long millis) {
-        int secondToMillis = 1000;
-        int minuteToMillis = secondToMillis * 60;
-        int hourToMillis = minuteToMillis * 60;
-
-        long hrs = millis / hourToMillis;
-        millis = millis % hourToMillis;
-        long minutes = millis / minuteToMillis;
-        millis = millis % minuteToMillis;
-        long seconds = millis / secondToMillis;
-        millis = millis % secondToMillis;
-
-        return String.format("%02d:%02d:%02d:%03d", hrs, minutes, seconds, millis);
-    }
-
-    private int validateMaxStep(int maxStep) {
-        if (maxStep > 0 && maxStep <= 100) {
-            return maxStep;
-        }
-
-        throw new IllegalArgumentException("Max step should be between 0 and 100 inclusive");
-    }
-
-    private long validateTotalElement(long totalElement) {
-        if (totalElement > 0) {
-            return totalElement;
-        }
-
-        throw new IllegalArgumentException("Total element should be positive number greater than 0");
-    }
-
-
+    /**
+     * Initializes start time for this progress bar by using current time millis from system
+     */
     public void initStartTime() {
-        this.startTime = System.currentTimeMillis();
+        initStartTime(currentTimeMillis());
     }
 
+    /**
+     * Sets the given millis as start time for this progress bar
+     *
+     * @param millis a millis to set
+     */
     public void initStartTime(long millis) {
         this.startTime = millis;
     }
 
+    /**
+     * Updates the progress bar by adding given element count to current element count
+     *
+     * @param element a element count to add to current element count
+     */
     public void updateBy(long element) {
-        if (element > totalElement) {
-            throw new IllegalArgumentException("Element cannot exceed total element number");
-        }
-        if (currentElementSize + element > totalElement) {
-            currentElementSize = totalElement;
-        } else {
-            currentElementSize += element;
-        }
-
-        update();
+        updateTo(currentElementSize + element);
     }
 
+    /**
+     * Updates the current element count for this progress bar with given element count
+     * If such element count is greater than total element count for this progress bar then
+     * current element count is set to max element count even if given count is greater than current
+     * element count
+     *
+     * @param element an element count to set as current element count
+     */
     public void updateTo(long element) {
         if (element > totalElement) {
             element = totalElement;
@@ -112,84 +221,32 @@ public class ProgressBar {
         update();
     }
 
+    /**
+     * Updates the progress bar by calculating percentage based on current element count
+     */
     private void update() {
-        long endTime = System.currentTimeMillis();
         int percentage = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
-        int remainingDelimiter = Long.valueOf((maxStep * currentElementSize) / totalElement - delimiterBuilder.length()).intValue();
+        int remainingDelimiter = Long.valueOf(
+            (maxStep * currentElementSize) / totalElement - delimiterBuilder.length()
+        ).intValue();
 
         if (remainingDelimiter > 0) {
-            IntStream.range(0, remainingDelimiter).mapToObj(i -> delimiter).forEach(delimiterBuilder::append);
+            delimiterBuilder.append(delimiter.repeat(remainingDelimiter));
         }
 
-        var statusString = status ? "|" : "-";
-        if (currentElementSize >= totalElement) {
-            statusString = "done...";
+        if (currentElementSize == totalElement) {
+            status = STATUS_DONE;
         }
 
-        printStream.printf(format, delimiterBuilder.toString(), currentElementSize, percentage, formattedMillis(endTime - startTime), statusString);
-        status = !status;
-    }
+        printStream.printf(
+            format,
+            delimiterBuilder.toString(),
+            currentElementSize,
+            percentage,
+            formattedMillis(currentTimeMillis() - startTime),
+            status
+        );
 
-    public int getMaxStep() {
-        return maxStep;
-    }
-
-    public long getTotalElement() {
-        return totalElement;
-    }
-
-    public void setTotalElement(long totalElement) {
-        this.totalElement = validateTotalElement(totalElement);
-    }
-
-    public String getDelimiter() {
-        return delimiter;
-    }
-
-    public PrintStream getPrintStream() {
-        return printStream;
-    }
-
-    public static class Builder {
-        private int maxStep;
-        private long totalElement;
-        private String delimiter;
-        private PrintStream printStream;
-        private String prefix;
-
-        private Builder() {
-            this.printStream = System.out;
-            this.delimiter = "#";
-            this.maxStep = 25;
-        }
-
-        public Builder withMaxStep(int maxStep) {
-            this.maxStep = maxStep;
-            return this;
-        }
-
-        public Builder withTotalElement(long totalElement) {
-            this.totalElement = totalElement;
-            return this;
-        }
-
-        public Builder withDelimiter(String delimiter) {
-            this.delimiter = delimiter;
-            return this;
-        }
-
-        public Builder withPrintStream(PrintStream printStream) {
-            this.printStream = printStream;
-            return this;
-        }
-
-        public Builder withPrefix(String prefix) {
-            this.prefix = prefix;
-            return this;
-        }
-
-        public ProgressBar build() {
-            return new ProgressBar(this);
-        }
+        status = STATUS_PIPE.equals(status) ? STATUS_MINUS : STATUS_PIPE;
     }
 }

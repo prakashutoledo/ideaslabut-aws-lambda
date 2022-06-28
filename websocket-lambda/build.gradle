@@ -2,13 +2,16 @@ dependencies {
     implementation project(':core')
 
     implementation 'com.amazonaws:aws-lambda-java-core'
-    implementation 'org.apache.logging.log4j:log4j-api'
-    implementation 'org.apache.logging.log4j:log4j-core'
+    runtimeOnly 'org.apache.logging.log4j:log4j-api'
+    runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
     runtimeOnly ('org.apache.logging.log4j:log4j-slf4j18-impl') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
+
     runtimeOnly 'com.amazonaws:aws-lambda-java-log4j2'
+
+    testRuntimeOnly 'org.slf4j:slf4j-nop'
 }
 
 task lambdaJar(type: Jar) {
