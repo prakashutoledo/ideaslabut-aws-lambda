@@ -62,6 +62,10 @@ afterEvaluate {
                 runOnClasspath = true
             }
             useJUnitPlatform()
+
+            testLogging {
+                showStandardStreams = true
+            }
         }
     }
 }
