@@ -26,6 +26,10 @@ final class FormatterUtil {
      * @return a formatted string representation of given millis
      */
     static String formattedMillis(long millis) {
+        if (millis < 0) {
+            throw new IllegalArgumentException("Millis should be greater than zero");
+        }
+
         long hrs = millis / HOUR_TO_MILLIS;
         millis = millis % HOUR_TO_MILLIS;
 

@@ -16,7 +16,7 @@ public abstract class Indexable extends Request {
      * @param <I> A type of body holds by this builder
      * @param <B> A type of indexable builder
      */
-    public static abstract class Builder<I extends Indexable, B extends Builder<I, B>> extends Request.BaseBuilder<I, B> {
+    public abstract static class Builder<I extends Indexable, B extends Builder<I, B>> extends Request.BaseBuilder<I, B> {
         protected String index;
 
         /**
