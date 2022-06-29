@@ -3,18 +3,14 @@
  */
 package org.ideaslabut.aws.lambda.extractor.util;
 
+import static org.ideaslabut.aws.lambda.extractor.util.FormatterUtil.formattedMillis;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
-
-import java.util.stream.Stream;
 
 /**
  * Unit test for {@link FormatterUtil#formattedMillis(long)}
@@ -23,12 +19,11 @@ import java.util.stream.Stream;
  *     Created On: Jun 29, 2022
  */
 class FormatterUtilTest {
-
     @Test
     void formatInvalidMillis() {
         var exception = assertThrows(
             IllegalArgumentException.class,
-            () -> FormatterUtil.formattedMillis(-1),
+            () -> formattedMillis(-1),
             "Millis is negative which will throw exception"
         );
 
@@ -36,7 +31,6 @@ class FormatterUtilTest {
         assertEquals("Millis should be greater than zero", exception.getMessage(), "Exception message");
     }
 
-    @ParameterizedTest
     @CsvSource(
         value = {
             "0,00:00:00:000",
@@ -48,8 +42,8 @@ class FormatterUtilTest {
         },
         delimiter = ','
     )
-    void formatValidMillis(int millis, String expectedFormat) {
-        var formattedMillis = FormatterUtil.formattedMillis(millis);
-        assertEquals(expectedFormat, formattedMillis, "Formatted millis");
+    @ParameterizedTest
+    void formatValidMillis(int millis, String expectedFormattedMillis) {
+        assertEquals(expectedFormattedMillis, formattedMillis(millis), "Formatted millis to string");
     }
 }
