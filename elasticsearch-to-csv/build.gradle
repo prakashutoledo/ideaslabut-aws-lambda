@@ -1,7 +1,14 @@
+apply plugin: 'application'
+
 dependencies {
     implementation project(':core')
     implementation project(':extractor-util')
     runtimeOnly 'org.slf4j:slf4j-nop'
+}
+
+application {
+    mainModule = 'ideaslabut.aws.lambda.elasticsearch.to.csv'
+    mainClass = 'org.ideaslabut.aws.lambda.estocsv.ElasticsearchToCsv'
 }
 
 task extractElasticsearchData(type: JavaExec) {
