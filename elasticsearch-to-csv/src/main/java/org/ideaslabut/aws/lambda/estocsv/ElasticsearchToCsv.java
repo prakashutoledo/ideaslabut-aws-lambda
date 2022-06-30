@@ -109,7 +109,7 @@ public class ElasticsearchToCsv {
         var consumer = UncheckedIOConsumer.wrap((Response response) -> {
             var hits = response.getHits().getHits();
             progressBar.updateBy(hits.size());
-            csvWriter.writeProperties(hits.stream().map(SourceHits::getSource).collect(toList()));
+            csvWriter.writeRows(hits.stream().map(SourceHits::getSource).collect(toList()));
             csvWriter.flush();
         });
 

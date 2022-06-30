@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 IDEAS Lab @ UT. All rights reserved.
+ * Copyright 2022 IDEAS Lab @ University of Toledo. All rights reserved.
  */
 package org.ideaslabut.aws.lambda.extractor.util;
 
@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -41,6 +42,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
         private String fileName;
         private String delimiter;
         private Set<String> headers;
+        private Path outputDirectory;
 
         /**
          * Creates a new instance of csv writer {@link Builder}
@@ -49,6 +51,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
             this.delimiter = ",";
             this.fileName = "temp";
             this.headers = new HashSet<>();
+            this.outputDirectory = Path.of(DEFAULT_WRITER_DIRECTORY);
         }
 
         /**
@@ -63,6 +66,19 @@ public class CSVWriter implements AutoCloseable, Flushable {
             return this;
         }
 
+        public Builder withOutputDirectory(Path directory) {
+            if (directory == null) {
+                throw new NullPointerException("Directory is null");
+            }
+
+            if (!Files.isDirectory(directory)) {
+                throw new IllegalArgumentException("Not a directory");
+            }
+
+            this.outputDirectory = directory;
+            return this;
+        }
+
         /**
          * Sets the default delimiter for thus csv writer builder
          *
@@ -71,7 +87,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
          * @return a reference to this csv writer builder
          */
         public Builder withDelimiter(String delimiter) {
-            this.delimiter = delimiter;
+            this.delimiter = requireNonNull(delimiter);
             return this;
         }
 
@@ -83,11 +99,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
          * @return a reference to this csv writer builder
          */
         public Builder withHeaders(Set<String> headers) {
-            if (headers == null || headers.isEmpty()) {
-                throw new IllegalArgumentException("Empty headers provided");
-            }
-
-            this.headers = headers;
+            this.headers = requireNonNull(headers);
             return this;
         }
 
@@ -101,22 +113,18 @@ public class CSVWriter implements AutoCloseable, Flushable {
          */
         public CSVWriter build() {
             var bufferedWriterFactory = UncheckedIOFunction.wrap((String fileName) -> {
-                Files.createDirectories(Path.of(DEFAULT_WRITER_DIRECTORY));
+                Path path = Files.createDirectories(outputDirectory);
                 return Files.newBufferedWriter(
-                    Path.of(
-                        String.format("%s/%s.%s",
-                            DEFAULT_WRITER_DIRECTORY,
-                            fileName,
-                            CSV_EXTENSION
-                        )
-                    ),
-                    UTF_8,
-                    CREATE,
-                    TRUNCATE_EXISTING,
-                    WRITE
+                    Path.of(String.format("%s/%s.%s", path.toString(), fileName, CSV_EXTENSION)),
+                    UTF_8, CREATE, TRUNCATE_EXISTING, WRITE
                 );
             });
-            return new CSVWriter(this, bufferedWriterFactory.apply(fileName));
+
+            var csvWriter = new CSVWriter(this, bufferedWriterFactory.apply(fileName));
+            if (!headers.isEmpty()) {
+                csvWriter.writeHeaders(headers);
+            }
+            return csvWriter;
         }
     }
 
@@ -141,7 +149,6 @@ public class CSVWriter implements AutoCloseable, Flushable {
      */
     private CSVWriter(Builder builder, Writer printWriter) {
         this.delimiter = builder.delimiter;
-        this.headers = builder.headers;
         this.printWriter = printWriter;
     }
 
@@ -152,12 +159,14 @@ public class CSVWriter implements AutoCloseable, Flushable {
      *
      * @throws IllegalArgumentException if given headers is null or empty
      */
-    public void writeHeaders(Set<String> headers) {
-        if (headers == null || headers.isEmpty()) {
-            throw new IllegalArgumentException("Empty headers provided");
+    public boolean writeHeaders(Set<String> headers) {
+        if (headers == null || headers.isEmpty() || (this.headers != null && !this.headers.isEmpty())) {
+            return false;
         }
+
         this.headers = headers;
         writeHeaders();
+        return true;
     }
 
     /**
@@ -165,8 +174,11 @@ public class CSVWriter implements AutoCloseable, Flushable {
      *
      * @param property a property map with value mapped into csv headers as key
      */
-    public void write(Map<String, String> property) {
-        writeProperties(List.of(property));
+    public void writeRow(Map<String, String> property) {
+        if (property == null || property.isEmpty()) {
+            throw new IllegalArgumentException("Property cannot be null");
+        }
+        writeRows(List.of(requireNonNull(property)));
     }
 
     /**
@@ -176,19 +188,19 @@ public class CSVWriter implements AutoCloseable, Flushable {
      * <p>
      * It is the callers responsibility to make sure that same sets of keys are used as csv property map
      *
-     * @param properties a list property map with value mapped into csv headers as key
+     * @param csvRows a list csv rows with value mapped into csv headers as key
      */
-    public void writeProperties(List<Map<String, String>> properties) {
-        if (properties == null || properties.isEmpty()) {
+    public void writeRows(List<Map<String, String>> csvRows) {
+        if (csvRows == null || csvRows.isEmpty()) {
             throw new IllegalArgumentException("Empty properties provided");
         }
 
         if (headers.isEmpty()) {
-            writeHeaders(properties.get(0).keySet());
+            writeHeaders(csvRows.get(0).keySet());
         }
 
-        properties.stream()
-            .map(map -> headers.stream().map(map::get).collect(joining(delimiter)))
+        csvRows.stream()
+            .map(csvRow -> headers.stream().map(csvRow::get).collect(joining(delimiter)))
             .forEach(this::writeLine);
     }
 
