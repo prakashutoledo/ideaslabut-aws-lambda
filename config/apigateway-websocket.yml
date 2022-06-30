@@ -104,6 +104,6 @@ Resources:
 
 Outputs:
   WearablesWebSocketUrl:
-    Value: !Sub wss://${WearablesWebSocket}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Value: !Sub wss://${WearablesWebSocket}.execute-api.${AWS::Region}.amazonaws.com/${WearablesWebSocketDeploymentStage}
   WearablesWebSocketManagementUrl:
-    Value: !Sub https://${WearablesWebSocket}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Value: !Sub https://${WearablesWebSocket}.execute-api.${AWS::Region}.amazonaws.com/${WearablesWebSocketDeploymentStage}
