@@ -21,11 +21,13 @@ import java.util.function.Function;
  */
 @FunctionalInterface
 public interface UncheckedIOFunction<T, R, E extends IOException> {
+    
     /**
      * Wraps the given function to throw unchecked io exceptions if checked io exception is caught
      *
      * @param uncheckedIOFunction a unchecked io function
      * @param <T> a type of input parameter for the function
+     * @param <R> a type of result from this function
      *
      * @return a function without any checked exception
      */

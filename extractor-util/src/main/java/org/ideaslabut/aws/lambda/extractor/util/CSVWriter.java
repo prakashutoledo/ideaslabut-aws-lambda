@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -31,7 +30,7 @@ import java.util.Set;
  *     Created on: Jan 30, 2022
  */
 public class CSVWriter implements AutoCloseable, Flushable {
-    private static final char UTF8_BOM = '\ufeff';
+    private static final String UTF8_BOM = "\ufeff";
     private static final String DEFAULT_WRITER_DIRECTORY = "build/elasticsearch";
     private static final String CSV_EXTENSION = "csv";
 
@@ -154,9 +153,13 @@ public class CSVWriter implements AutoCloseable, Flushable {
     }
 
     /**
-     * Write the given set of csv headers if it is not empty or not null
+     * Write the given set of csv headers if it is not empty or not null or if it is not previously written
      *
-     * @param headers a set of csv headers
+     * If no such headers is written it will also cache the headers for future check
+     *
+     * @param headers a set of csv headers to be cached and written
+     *
+     * @return if headers is written successfully
      *
      * @throws IllegalArgumentException if given headers is null or empty
      */
@@ -209,8 +212,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
      * Write csv headers line with the default delimiter with UTF-8 bom
      */
     private void writeHeaders() {
-        write(String.valueOf(UTF8_BOM));
-        writeLine(String.join(delimiter, headers));
+        writeLine(UTF8_BOM + String.join(delimiter, headers));
     }
 
     /**
