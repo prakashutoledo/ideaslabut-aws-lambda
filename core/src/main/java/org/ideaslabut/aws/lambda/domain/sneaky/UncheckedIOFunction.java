@@ -26,7 +26,6 @@ public interface UncheckedIOFunction<T, R, E extends IOException> {
      *
      * @param uncheckedIOFunction a unchecked io function
      * @param <T> a type of input parameter for the function
-     * @param <R> a type of the result
      *
      * @return a function without any checked exception
      */
@@ -35,7 +34,8 @@ public interface UncheckedIOFunction<T, R, E extends IOException> {
         return value -> {
             try {
                 return uncheckedIOFunction.apply(value);
-            } catch (IOException ioe) {
+            }
+            catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
         };

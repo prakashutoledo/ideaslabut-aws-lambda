@@ -22,7 +22,7 @@ class ProgressBarTest {
     @Test
     void validProgressBarBuilder() {
         assertNotNull(ProgressBar.builder(), "Progress bar builder shouldn't be null");
-        var progressBar = ProgressBar.builder().withMaxStep(100).withDelimiter(",").withPrefix(null).build();
+        var progressBar = ProgressBar.builder().withMaxStep(100).withDelimiter(',').withPrefix(null).build();
         assertNotNull(progressBar, "Created progress bar should not be null");
     }
 
@@ -30,7 +30,6 @@ class ProgressBarTest {
     void invalidProgressBarBuilder() {
         assertThrows(IllegalArgumentException.class, () -> ProgressBar.builder().withMaxStep(-1));
         assertThrows(IllegalArgumentException.class, () -> ProgressBar.builder().withMaxStep(101));
-        assertThrows(NullPointerException.class, () -> ProgressBar.builder().withDelimiter(null));
         assertThrows(IllegalArgumentException.class, () -> ProgressBar.builder().withTotalElement(-1));
         assertThrows(NullPointerException.class, () -> ProgressBar.builder().withPrintStream(null));
     }
@@ -42,7 +41,7 @@ class ProgressBarTest {
             .builder()
             .withMaxStep(5)
             .withPrefix("Some Prefix")
-            .withDelimiter("#")
+            .withDelimiter('#')
             .withPrintStream(new PrintStream(outputStream))
             .withTotalElement(5)
             .build();

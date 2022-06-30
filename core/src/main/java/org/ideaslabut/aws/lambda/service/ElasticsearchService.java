@@ -27,7 +27,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -87,7 +86,7 @@ public class ElasticsearchService {
      * @param objectMapper an object mapper to set
      */
     private ElasticsearchService(HttpClient httpClient, ObjectMapper objectMapper) {
-        this.httpClient = Objects.requireNonNull(httpClient);
+        this.httpClient = httpClient;
         this.objectMapper = objectMapper;
     }
 

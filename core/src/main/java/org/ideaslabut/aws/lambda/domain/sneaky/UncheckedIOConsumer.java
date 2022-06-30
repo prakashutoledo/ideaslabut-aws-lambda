@@ -34,7 +34,8 @@ public interface UncheckedIOConsumer<T, E extends IOException> {
         return value -> {
             try {
                 uncheckedIOConsumer.accept(value);
-            } catch (final IOException exception) {
+            }
+            catch (final IOException exception) {
                 throw new UncheckedIOException(exception);
             }
         };

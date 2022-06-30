@@ -31,7 +31,8 @@ public interface NoArgUncheckedIOConsumer<E extends IOException> {
         return () -> {
             try {
                 noArgConsumer.accept();
-            } catch (IOException exception) {
+            }
+            catch (IOException exception) {
                 throw new UncheckedIOException(exception);
             }
         };

@@ -26,7 +26,7 @@ public class ProgressBar {
     public static class Builder {
         private int maxStep;
         private long totalElement;
-        private String delimiter;
+        private char delimiter;
         private PrintStream printStream;
         private String prefix;
 
@@ -35,7 +35,7 @@ public class ProgressBar {
          */
         private Builder() {
             this.printStream = System.out;
-            this.delimiter = "#";
+            this.delimiter = '#';
             this.maxStep = 25;
         }
 
@@ -70,8 +70,8 @@ public class ProgressBar {
          *
          * @return a reference to this builder
          */
-        public Builder withDelimiter(String delimiter) {
-            this.delimiter = Objects.requireNonNull(delimiter);
+        public Builder withDelimiter(char delimiter) {
+            this.delimiter = delimiter;
             return this;
         }
 
@@ -153,7 +153,7 @@ public class ProgressBar {
     }
 
     private final int maxStep;
-    private final String delimiter;
+    private final char delimiter;
     private final PrintStream printStream;
     private final String format;
     private final StringBuilder delimiterBuilder;
@@ -172,9 +172,9 @@ public class ProgressBar {
         this.printStream = builder.printStream;
         this.maxStep = builder.maxStep;
         this.totalElement = builder.totalElement;
-        this.format = "\r" + builder.prefix + " [%-" + this.maxStep + "s]" + " [%" +
-            String.valueOf(totalElement).length() + "d/" + totalElement + "] [%3d%%] [%s] [%s]";
-        this.delimiterBuilder = new StringBuilder();
+
+        this.format = "\r" + builder.prefix + " [%-" + this.maxStep + "s]" + " [%" + ("" + totalElement).length() + "d/" + totalElement + "] [%3d%%] [%s] [%s]";
+        this.delimiterBuilder = new StringBuilder(this.maxStep);
         this.currentElementSize = 0;
         this.status = STATUS_PIPE;
     }
@@ -225,13 +225,17 @@ public class ProgressBar {
      * Updates the progress bar by calculating percentage based on current element count
      */
     private void update() {
-        int percentage = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
+        int progressPercentage = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
         int remainingDelimiter = Long.valueOf(
             (maxStep * currentElementSize) / totalElement - delimiterBuilder.length()
         ).intValue();
 
         if (remainingDelimiter > 0) {
-            delimiterBuilder.append(delimiter.repeat(remainingDelimiter));
+            char[] delimiters = new char[remainingDelimiter];
+            for (int i = 0; i < remainingDelimiter; i++) {
+                delimiters[i] = delimiter;
+            }
+            delimiterBuilder.append(delimiters);
         }
 
         if (currentElementSize == totalElement) {
@@ -242,7 +246,7 @@ public class ProgressBar {
             format,
             delimiterBuilder.toString(),
             currentElementSize,
-            percentage,
+            progressPercentage,
             formattedMillis(currentTimeMillis() - startTime),
             status
         );

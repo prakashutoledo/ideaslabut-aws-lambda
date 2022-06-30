@@ -122,7 +122,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
 
             var csvWriter = new CSVWriter(this, bufferedWriterFactory.apply(fileName));
             if (!headers.isEmpty()) {
-                csvWriter.writeHeaders(headers);
+                csvWriter.writeHeaders();
             }
             return csvWriter;
         }
@@ -150,6 +150,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
     private CSVWriter(Builder builder, Writer printWriter) {
         this.delimiter = builder.delimiter;
         this.printWriter = printWriter;
+        this.headers = builder.headers;
     }
 
     /**
@@ -160,7 +161,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
      * @throws IllegalArgumentException if given headers is null or empty
      */
     public boolean writeHeaders(Set<String> headers) {
-        if (headers == null || headers.isEmpty() || (this.headers != null && !this.headers.isEmpty())) {
+        if (headers == null || headers.isEmpty() || !this.headers.isEmpty()) {
             return false;
         }
 
@@ -195,7 +196,7 @@ public class CSVWriter implements AutoCloseable, Flushable {
             throw new IllegalArgumentException("Empty properties provided");
         }
 
-        if (headers.isEmpty()) {
+        if (this.headers == null || headers.isEmpty()) {
             writeHeaders(csvRows.get(0).keySet());
         }
 
