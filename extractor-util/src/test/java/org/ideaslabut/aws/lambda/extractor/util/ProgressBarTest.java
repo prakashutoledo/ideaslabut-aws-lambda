@@ -65,7 +65,8 @@ class ProgressBarTest {
 
         outputStream.reset();
         progressBar.updateBy(100);
-        assertEquals("Some Prefix [#####] [5/5] [100%] [00:00:00:000] [done...]",
+        assertEquals(
+            "Some Prefix [#####] [5/5] [100%] [00:00:00:000] [done...]",
             outputStream.toString().trim(),
             "Adds 100 to current element size making greater than 5 which is 100% complete"
         );

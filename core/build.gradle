@@ -16,6 +16,11 @@ dependencies {
     testRuntimeOnly 'org.slf4j:slf4j-nop'
 }
 
+test {
+    environment "ELASTICSEARCH_URL", "https://fake-url"
+    environment "ELASTICSEARCH_AUTHENTICATION_KEY", "abcde"
+    environment "WEBSOCKET_MANAGEMENT_URL", "https://fake-management-url"
+}
 jar {
     exclude '**/**.sample'
 }

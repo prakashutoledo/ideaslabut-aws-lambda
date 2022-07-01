@@ -101,7 +101,7 @@ public class ElasticsearchService {
      */
     public Optional<Response> search(SearchRequest searchRequest) {
         LOGGER.debug("Performing elasticsearch search request {}", searchRequest);
-        if (searchRequest == null || searchRequest.getIndex() == null) {
+        if (searchRequest == null) {
             return Optional.empty();
         }
         String apiPath = String.format("%s/_search?size=%d&scroll=%s", searchRequest.getIndex(), searchRequest.getSize(), searchRequest.getScroll());

@@ -3,6 +3,10 @@
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.Objects;
+
 /**
  * An elasticsearch request which holds elasticsearch index information
  *
@@ -28,7 +32,7 @@ public abstract class Indexable extends Request {
          */
         @SuppressWarnings("unchecked")
         public B withIndex(String index) {
-            this.index = index;
+            this.index = requireNonNull(index);
             return (B) this;
         }
 

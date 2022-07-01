@@ -3,6 +3,10 @@
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.Objects;
+
 /**
  * An elasticsearch request which holds scroll information
  *
@@ -35,7 +39,7 @@ public abstract class Scrollable extends Indexable {
          */
         @SuppressWarnings("unchecked")
         public B withScroll(String scroll) {
-            this.scroll = scroll;
+            this.scroll = requireNonNull(scroll);
             return (B) this;
         }
     }
