@@ -191,7 +191,7 @@ public class ElasticsearchService {
             .withIndex(searchRequest.getIndex())
             .build();
 
-        while (searchResponse.isPresent() && count != totalCount) {
+        do {
             var response = searchResponse.get();
             count += response.getHits().getHits().size();
 
@@ -201,7 +201,7 @@ public class ElasticsearchService {
 
             scrollRequest.setScrollId(response.getScrollId());
             searchResponse = scroll(scrollRequest);
-        }
+        } while(searchResponse.isPresent() && count != totalCount);
 
         Optional.ofNullable(onComplete).ifPresent(NoArgConsumer::accept);
     }

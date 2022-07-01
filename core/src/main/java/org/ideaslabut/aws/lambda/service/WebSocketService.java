@@ -198,7 +198,7 @@ public class WebSocketService {
                 .reduce(true, (partial, sendMessageStatus) -> partial && sendMessageStatus);
             status.set(status.get() && sendStatus);
         };
-
+        
         elasticsearchService.searchAll(
             SearchRequest.builder().withSize(10)
                 .withIndex(WEB_SOCKET_INDEX_NAME)
