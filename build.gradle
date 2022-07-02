@@ -21,7 +21,7 @@ plugins {
 }
 
 allprojects {
-    apply plugin: 'java'
+    apply plugin: 'groovy'
 
     group = 'org.ideaslabut'
     version = '1.0.0-SNAPSHOT'
