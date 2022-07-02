@@ -3,7 +3,11 @@
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
+import static java.util.Objects.requireNonNull;
+
 import org.ideaslabut.aws.lambda.domain.elasticsearch.IndexBody;
+
+import java.util.Objects;
 
 /**
  * An elasticsearch request to hold indexable body information
@@ -33,6 +37,13 @@ public abstract class IndexableBodyRequest<I extends IndexBody> extends Indexabl
          */
         @SuppressWarnings("unchecked")
         public B withBody(I body) {
+            if (body == null) {
+                throw new NullPointerException("Body is null");
+            }
+            if (body.getId() == null) {
+                throw new NullPointerException("Invalid body");
+            }
+
             this.body = body;
             return (B) this;
         }

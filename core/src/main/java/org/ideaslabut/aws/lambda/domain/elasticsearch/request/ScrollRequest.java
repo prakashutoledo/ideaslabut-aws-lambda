@@ -3,6 +3,8 @@
  */
 package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * An elasticsearch request which helps to perform scroll request
  *
@@ -10,15 +12,6 @@ package org.ideaslabut.aws.lambda.domain.elasticsearch.request;
  *     Created On: Jun 27, 2022
  */
 public class ScrollRequest extends Scrollable {
-    /**
-     * Creates a new instance of {@link Builder}
-     *
-     * @return a newly created builder {@link Builder}
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-
     /**
      * An elasticsearch scroll request builder
      */
@@ -40,7 +33,7 @@ public class ScrollRequest extends Scrollable {
          * @return a reference of this builder {@link Builder}
          */
         public Builder withScrollId(String scrollId) {
-            this.scrollId = scrollId;
+            this.scrollId = requireNonNull(scrollId);
             return this;
         }
 
@@ -55,6 +48,14 @@ public class ScrollRequest extends Scrollable {
         }
     }
 
+    /**
+     * Creates a new instance of {@link Builder}
+     *
+     * @return a newly created builder {@link Builder}
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
     private String scrollId;
 
     /**

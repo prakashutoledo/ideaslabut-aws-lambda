@@ -100,10 +100,10 @@ public class ElasticsearchService {
      * @return an optional elasticsearch response
      */
     public Optional<Response> search(SearchRequest searchRequest) {
-        LOGGER.debug("Performing elasticsearch search request {}", searchRequest);
         if (searchRequest == null) {
             return Optional.empty();
         }
+        LOGGER.debug("Performing elasticsearch search request {}", searchRequest);
         String apiPath = String.format("%s/_search?size=%d&scroll=%s", searchRequest.getIndex(), searchRequest.getSize(), searchRequest.getScroll());
         return send(httpRequest(HTTP_METHOD_GET, null, apiPath), searchRequest);
     }
@@ -118,11 +118,11 @@ public class ElasticsearchService {
      * @return an optional elasticsearch response
      */
     public Optional<Response> scroll(ScrollRequest scrollRequest) {
-        LOGGER.debug("Performing elasticsearch scroll request {}", scrollRequest);
-        if (scrollRequest == null || scrollRequest.getScrollId() == null) {
+        if (scrollRequest == null) {
             return Optional.empty();
         }
 
+        LOGGER.debug("Performing elasticsearch scroll request {}", scrollRequest);
         var apiPath = String.format("_search/scroll?scroll=%s", scrollRequest.getScroll());
         var scroll = new Scroll();
         scroll.setScrollId(scrollRequest.getScrollId());
@@ -136,8 +136,8 @@ public class ElasticsearchService {
      * @param createRequest a create request to use
      */
     public void create(CreateRequest<? extends IndexBody> createRequest) {
-        LOGGER.debug("Performing elasticsearch create document request {}", createRequest);
         checkRequest(createRequest);
+        LOGGER.debug("Performing elasticsearch create document request {}", createRequest);
         var apiPath = String.format("%s/_create/%s", createRequest.getIndex(), createRequest.getBody().getId());
         send(httpRequest(HTTP_METHOD_POST, createRequest.getBody(), apiPath), createRequest);
     }
@@ -149,8 +149,8 @@ public class ElasticsearchService {
      * @param deleteRequest a delete request to set
      */
     public void delete(DeleteRequest<? extends IndexBody> deleteRequest) {
-        LOGGER.debug("Performing elasticsearch delete document request {}", deleteRequest);
         checkRequest(deleteRequest);
+        LOGGER.debug("Performing elasticsearch delete document request {}", deleteRequest);
         var apiPath = String.format("%s/_doc/%s", deleteRequest.getIndex(), deleteRequest.getBody().getId());
         send(httpRequest(HTTP_METHOD_DELETE, null, apiPath), deleteRequest);
     }
@@ -211,10 +211,10 @@ public class ElasticsearchService {
      *
      * @param request a request to be validated
      *
-     * @throws IllegalArgumentException if any of the request, index, body or bodyId is null
+     * @throws IllegalArgumentException if any of the request is null
      */
     private void checkRequest(IndexableBodyRequest<? extends IndexBody> request) {
-        if (request == null || request.getIndex() == null || request.getBody() == null || request.getBody().getId() == null) {
+        if (request == null) {
             throw new IllegalArgumentException("Invalid request");
         }
     }
