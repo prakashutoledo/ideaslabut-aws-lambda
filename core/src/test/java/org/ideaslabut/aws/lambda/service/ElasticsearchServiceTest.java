@@ -67,6 +67,7 @@ class ElasticsearchServiceTest {
     private final AtomicInteger counter = new AtomicInteger(0);
     @Spy
     private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Mock
     private HttpClient httpClient;
     @InjectMocks
