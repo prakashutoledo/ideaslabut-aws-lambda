@@ -3,10 +3,12 @@
  */
 package org.ideaslabut.aws.lambda.extractor.util;
 
-import static java.lang.System.currentTimeMillis;
+import static java.time.Instant.now;
+import static java.util.Objects.*;
 import static org.ideaslabut.aws.lambda.extractor.util.FormatterUtil.formattedMillis;
 
 import java.io.PrintStream;
+import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -83,7 +85,7 @@ public class ProgressBar {
          * @return a reference to this builder
          */
         public Builder withPrintStream(PrintStream printStream) {
-            this.printStream = Objects.requireNonNull(printStream);
+            this.printStream = requireNonNull(printStream);
             return this;
         }
 
@@ -174,6 +176,7 @@ public class ProgressBar {
         this.totalElement = builder.totalElement;
 
         this.format = "\r" + builder.prefix + " [%-" + this.maxStep + "s]" + " [%" + ("" + totalElement).length() + "d/" + totalElement + "] [%3d%%] [%s] [%s]";
+        // sized string builder will avoid creating allocation of unnecessary bytes
         this.delimiterBuilder = new StringBuilder(this.maxStep);
         this.currentElementSize = 0;
         this.status = STATUS_PIPE;
@@ -183,16 +186,16 @@ public class ProgressBar {
      * Initializes start time for this progress bar by using current time millis from system
      */
     public void initStartTime() {
-        initStartTime(currentTimeMillis());
+        initStartTime(Instant.now());
     }
 
     /**
-     * Sets the given millis as start time for this progress bar
+     * Sets the instant as start time in epoch millis for this progress bar
      *
-     * @param millis a millis to set
+     * @param instant an instant to get epoch millis
      */
-    public void initStartTime(long millis) {
-        this.startTime = millis;
+    public void initStartTime(Instant instant) {
+        this.startTime = requireNonNull(instant).toEpochMilli();
     }
 
     /**
@@ -247,7 +250,7 @@ public class ProgressBar {
             delimiterBuilder.toString(),
             currentElementSize,
             progressPercentage,
-            formattedMillis(currentTimeMillis() - startTime),
+            formattedMillis(now().toEpochMilli() - startTime),
             status
         );
 

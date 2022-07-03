@@ -14,6 +14,7 @@ import org.ideaslabut.aws.lambda.extractor.util.CSVWriter;
 import org.ideaslabut.aws.lambda.extractor.util.ProgressBar;
 import org.ideaslabut.aws.lambda.service.ElasticsearchService;
 
+import java.time.Instant;
 import java.util.stream.Stream;
 
 /**
@@ -78,7 +79,7 @@ public class ElasticsearchToCsv {
      * @param indexMap an index map to perform
      */
     private static void searchAll(IndexMap indexMap) {
-        long startTime = System.currentTimeMillis();
+        var startTime = Instant.now();
         System.out.println();
 
         String indexName = indexMap.indexName;
