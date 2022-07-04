@@ -45,7 +45,7 @@ class CSVWriterTest {
     }
 
     @TempDir
-    private Path tempPath;
+    Path tempPath;
 
     private CSVWriter.Builder builder;
 
@@ -58,7 +58,7 @@ class CSVWriterTest {
     void validCSVBuilderTest() throws IOException {
         assertNotNull(builder, "Builder should be created");
         try (var csvWriter = builder.withHeaders(Set.of("id, name"))
-                .withDelimiter(",").withFileName("test").build()) {
+            .withDelimiter(",").withFileName("test").build()) {
             assertNotNull(csvWriter, "Writer shouldn't be null");
         }
     }
@@ -76,7 +76,7 @@ class CSVWriterTest {
 
     @Test
     void flush() throws IOException {
-        try(var csvWriter = builder.withHeaders(Set.of("a")).build()) {
+        try (var csvWriter = builder.withHeaders(Set.of("a")).build()) {
             var bytes = Files.readAllBytes(Path.of(tempPath.toString(), "temp.csv"));
 
             assertEquals(0, bytes.length, "No header bytes were written as bytes were buffered");

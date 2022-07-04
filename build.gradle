@@ -22,6 +22,7 @@ plugins {
 
 allprojects {
     apply plugin: 'groovy'
+    apply plugin: 'jacoco'
 
     group = 'org.ideaslabut'
     version = '1.0.0-SNAPSHOT'
@@ -59,6 +60,16 @@ afterEvaluate {
             testImplementation "org.hamcrest:hamcrest:${hamcrestVersion}"
         }
 
+        jacocoTestReport {
+            reports {
+                xml.required = false
+                csv.required = true
+                html.required = false
+            }
+
+            dependsOn 'test'
+        }
+
         test {
             moduleOptions {
                 runOnClasspath = true
@@ -66,8 +77,11 @@ afterEvaluate {
             useJUnitPlatform()
 
             testLogging {
+                events 'passed', 'skipped', 'failed'
                 showStandardStreams = true
             }
+
+            finalizedBy 'jacocoTestReport'
         }
     }
 }
