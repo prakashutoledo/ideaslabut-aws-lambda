@@ -216,7 +216,7 @@ class ElasticsearchServiceTest {
     }
 
     private Matcher<HttpRequest> httpMethod(String method) {
-        return is(withHttpMethod(is(equalTo("GET"))));
+        return is(withHttpMethod(is(equalTo(method))));
     }
 
     private Matcher<HttpRequest> withUri(String apiPath) {

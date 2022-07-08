@@ -63,13 +63,15 @@ public class ElasticsearchToCsv {
      * @param args a command line arguments to use
      */
     public static void main(String[] args) {
-        Stream.of(IndexMap.of("accelerometer", 1000),
+        Stream.of(
+            IndexMap.of("accelerometer", 1000),
             IndexMap.of("gyroscope", 1000),
             IndexMap.of("gsr", 20),
             IndexMap.of("heartrate", 5),
             IndexMap.of("ibi", 5),
-            IndexMap.of("bvp", 5),
-            IndexMap.of("temperature", 1)
+            IndexMap.of("bvp", 1000),
+            IndexMap.of("temperature", 1),
+            IndexMap.of("rating", 1)
         ).forEach(ElasticsearchToCsv::searchAll);
     }
 
