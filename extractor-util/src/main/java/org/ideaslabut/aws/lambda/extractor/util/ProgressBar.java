@@ -4,12 +4,11 @@
 package org.ideaslabut.aws.lambda.extractor.util;
 
 import static java.time.Instant.now;
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 import static org.ideaslabut.aws.lambda.extractor.util.FormatterUtil.formattedMillis;
 
 import java.io.PrintStream;
 import java.time.Instant;
-import java.util.Objects;
 
 /**
  * A command line progress bar
@@ -175,7 +174,10 @@ public class ProgressBar {
         this.maxStep = builder.maxStep;
         this.totalElement = builder.totalElement;
 
-        this.format = "\r" + builder.prefix + " [%-" + this.maxStep + "s]" + " [%" + ("" + totalElement).length() + "d/" + totalElement + "] [%3d%%] [%s] [%s]";
+        this.format = "\r" + builder.prefix +
+            " [%-" + this.maxStep + "s]" +
+            " [%" + ("" + totalElement).length() +
+            "d/" + totalElement + "] [%3d%%] [%s] [%s]";
         // sized string builder will avoid creating allocation of unnecessary bytes
         this.delimiterBuilder = new StringBuilder(this.maxStep);
         this.currentElementSize = 0;
@@ -228,14 +230,13 @@ public class ProgressBar {
      * Updates the progress bar by calculating percentage based on current element count
      */
     private void update() {
-        int progressPercentage = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
-        int remainingDelimiter = Long.valueOf(
-            (maxStep * currentElementSize) / totalElement - delimiterBuilder.length()
-        ).intValue();
+        int progressRatio = Long.valueOf((currentElementSize * 100) / totalElement).intValue();
+        int remainingCount = Long.valueOf((maxStep * currentElementSize) / totalElement - delimiterBuilder.length())
+            .intValue();
 
-        if (remainingDelimiter > 0) {
-            char[] delimiters = new char[remainingDelimiter];
-            for (int i = 0; i < remainingDelimiter; i++) {
+        if (remainingCount > 0) {
+            char[] delimiters = new char[remainingCount];
+            for (int i = 0; i < remainingCount; i++) {
                 delimiters[i] = delimiter;
             }
             delimiterBuilder.append(delimiters);
@@ -249,11 +250,13 @@ public class ProgressBar {
             format,
             delimiterBuilder.toString(),
             currentElementSize,
-            progressPercentage,
+            progressRatio,
             formattedMillis(now().toEpochMilli() - startTime),
             status
         );
 
-        status = STATUS_PIPE.equals(status) ? STATUS_MINUS : STATUS_PIPE;
+        if (!STATUS_DONE.equals(status)) {
+            status = STATUS_PIPE.equals(status) ? STATUS_MINUS : STATUS_PIPE;
+        }
     }
 }

@@ -2,7 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   ideaslabut-aws-lambda
-
   Template for `ideaslabut-aws-lambda` which creates lambda function to invoke execute api for websocket connections
 
 Parameters:
